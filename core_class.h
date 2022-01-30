@@ -11,16 +11,12 @@ core class handles natural cores
 #include<math.h>
 #include<stdlib.h>
 #include<time.h>
-#include<pthread.h>
 #include<thread>
 #include<dirent.h>
 #include<unistd.h>
 #include<sys/ioctl.h>//for the terminal size
 
 #include"neuron_and_ann_class.h"
-//#include"nn_core_data_package_class.h"
-
-typedef void * (*THREADFUNCPTR)(void *);
 
 using namespace std;
 static pthread_mutex_t lock_1;
