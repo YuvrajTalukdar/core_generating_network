@@ -9,6 +9,12 @@
 
 using namespace std;
 
+void clrscr()
+{
+    cout << "\033[2J\033[1;1H";
+    //system("clear");
+}
+
 bool menu(string &file_name,int &test_train_predict,float &data_division,string &network_save_file_name)
 {
     //.csv file finder
@@ -33,7 +39,7 @@ bool menu(string &file_name,int &test_train_predict,float &data_division,string 
     struct winsize w;
     ioctl(0,TIOCGWINSZ,&w);
     point0:
-    system("clear");
+    clrscr();
     string heading="NON BACKPROPAGATION ALGORITHM TEST INTERFACE\n";
     cout<<setw(w.ws_col/2+heading.length()/2)<<heading;
     cout<<"\n\n1. Train network on the entire dataset\n"<<"2. Train and test the network\n"<<"3. Use a trained network to make predictions\n";
@@ -51,7 +57,7 @@ bool menu(string &file_name,int &test_train_predict,float &data_division,string 
     else if(option1==1)
     {
         //file selector for complete training
-        system("clear");
+        clrscr();
         heading="NON BACKPROPAGATION ALGORITHM TEST INTERFACE\n";
         cout<<setw(w.ws_col/2+heading.length()/2)<<heading;      
         string note="\n\nHere a new network will be created if no network file exist and trained on the entire dataset, \nelse if a network file is available than a new network file will be creeated which will have \nall the connections from the old network and also the new connections will be created this time, so \nif you want to test the accuracy of the network generated, it is scientifically not accurate to \ntest the network trained on the same dataset so better do the testing on another new dataset of \nsame nature. The accuracy may be increased in the process of multiple training.\nIF YOU WANT A BRAND NEW NETWORK THAN MAKE SURE THE CURRENT DIRECTORY DONT WAVE ANY NETWORK FILE.";
@@ -73,7 +79,7 @@ bool menu(string &file_name,int &test_train_predict,float &data_division,string 
         }
         else if(file_choice==0)
         {   
-            system("clear");
+            clrscr();
             goto point0;
         }
         else
@@ -84,7 +90,7 @@ bool menu(string &file_name,int &test_train_predict,float &data_division,string 
     else if(option1==2)
     {
         //file selector for part training and part testing
-        system("clear");
+        clrscr();
         heading="NON BACKPROPAGATION ALGORITHM TEST INTERFACE\n";
         cout<<setw(w.ws_col/2+heading.length()/2)<<heading;      
         string note1;//="\n\nThis will create a new network trained with specific test : train ratio dataset.\nThe dataset will be divided into testing and training sets, and after training \nthe network on the training set its acuracy will be automatically tested \non the testing set.";
@@ -106,13 +112,13 @@ bool menu(string &file_name,int &test_train_predict,float &data_division,string 
         }
         else if(file_choice==0)
         {   
-            system("clear");
+            clrscr();
             goto point0;
         }
         else
         {   file_name=csv_save_file[file_choice-1];}
         //data division selector
-        system("clear");
+        clrscr();
         heading="NON BACKPROPAGATION ALGORITHM TEST INTERFACE\n";
         cout<<setw(w.ws_col/2+heading.length()/2)<<heading;        
         cout<<"\n\nEnter the test : train ratio :-\n\n";
@@ -124,7 +130,7 @@ bool menu(string &file_name,int &test_train_predict,float &data_division,string 
     else if(option1==3)
     {
         point7:
-        system("clear");
+        clrscr();
         heading="NON BACKPROPAGATION ALGORITHM TEST INTERFACE\n";
         cout<<setw(w.ws_col/2+heading.length()/2)<<heading;  
         string note2="\n\nThe prediction results are saved on a file named prediction_results.csv. ";
@@ -168,7 +174,7 @@ bool menu(string &file_name,int &test_train_predict,float &data_division,string 
         {   network_save_file_name=network_save_file[option2-1];}
         //data_file_selector
 
-        system("clear");
+        clrscr();
         heading="NON BACKPROPAGATION ALGORITHM TEST INTERFACE\n";
         cout<<setw(w.ws_col/2+heading.length()/2)<<heading;     
         string note1="\n\nSelect the data file for the network you have selected before. If the selected datafile's data is \nnot of the type which was used to train the network in the network file the software may crash or \nstop. ";
@@ -190,7 +196,7 @@ bool menu(string &file_name,int &test_train_predict,float &data_division,string 
         }
         else if(file_choice==0)
         {   
-            system("clear");
+            clrscr();
             goto point7;
         }
         else
@@ -200,7 +206,7 @@ bool menu(string &file_name,int &test_train_predict,float &data_division,string 
     }
     else if(option1==4)
     {
-        system("clear");
+        clrscr();
         heading="NON BACKPROPAGATION ALGORITHM TEST INTERFACE\n";
         cout<<setw(w.ws_col/2+heading.length()/2)<<heading;  
         string note2="\n\nHere you can enter the data yourself and let the algorithm predict the appropriate result, \nthe result will appear instantaneously in this interface itself.";
@@ -244,7 +250,7 @@ bool menu(string &file_name,int &test_train_predict,float &data_division,string 
     }
     else if(option1==5)//auto train with table top finder
     {
-        system("clear");
+        clrscr();
         heading="NON BACKPROPAGATION ALGORITHM AUTO TRAIN INTERFACE\n";
         cout<<setw(w.ws_col/2+heading.length()/2)<<heading;      
         string note="\n\nHere a new network will be created and trained till table top accuracy is not reached.";
@@ -266,7 +272,7 @@ bool menu(string &file_name,int &test_train_predict,float &data_division,string 
         }
         else if(file_choice==0)
         {   
-            system("clear");
+            clrscr();
             goto point0;
         }
         else

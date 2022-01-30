@@ -12,6 +12,7 @@ core class handles natural cores
 #include<stdlib.h>
 #include<time.h>
 #include<pthread.h>
+#include<thread>
 #include<dirent.h>
 #include<unistd.h>
 #include<sys/ioctl.h>//for the terminal size
@@ -299,6 +300,7 @@ class core_class{
     void set_the_no_of_threads_required(int no_of_c_datapacks_after_big_datapack_handling=0,bool tried_before=false);
     string message;
     void print_message();
+    void clrscr();
 
     public:
 

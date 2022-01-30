@@ -569,7 +569,7 @@ bool modified_simplex_solver::start_solver(converted_data_pack* cdp)
     {
         cout<<"got it!!!!";
         cdp->corupt_pack=true;
-        return true;
+        return false;
     }
     else if(corrupt_cdp==false)
     {   
@@ -830,10 +830,11 @@ bool modified_simplex_solver::start_solver(converted_data_pack* cdp)
             }
             //as cdp is an address of the original cdp obj is already present in the previous function.
         }
-        return false;
+        delete st;
+        return true;
     }
-    
-    free(st);
+    else//this is for avoiding compilation warning
+    {   return false;}
 }
 
 bool modified_simplex_solver::cyclic_bug_present()
@@ -2034,9 +2035,8 @@ void core_class::simplex_solver_data_entry_point(vector<nn_core_filtered_data> f
         simplex_solver_data_preparation_class *lpp_solver=new simplex_solver_data_preparation_class(c_datapacks_vector[a],ds,&network1);//initializing the obj of the class   
         lpp_solver_vec.push_back(lpp_solver);
     }
-    vector<pthread_t> threadIds(required_no_of_threads);//thread declaration
-    pthread_t progress_display_thread;
-    vector<int> error(required_no_of_threads);
+    vector<thread*> thread_vec(required_no_of_threads);
+    thread* progress_diaplay_thread;
     message.clear();
     message=" lpp_solver_vec size="+to_string(lpp_solver_vec.size());
     print_message();
@@ -2048,32 +2048,19 @@ void core_class::simplex_solver_data_entry_point(vector<nn_core_filtered_data> f
     time_t begin=time(0);
     //lpp solvers will start now.........
     for(int a=0;a<required_no_of_threads;a++)
-    {   //memory_optimization4 : turn &lpp_solver_vec[a] to lpp_solver_vec[a]
-        error[a]=pthread_create(&threadIds[a], NULL, (THREADFUNCPTR) &simplex_solver_data_preparation_class::lp_solver,lpp_solver_vec[a]);//thread creator
-    }
-    int progress_bar_error;
+    {   thread_vec[a]=new thread(&simplex_solver_data_preparation_class::lp_solver,lpp_solver_vec[a]);}
+    //int progress_bar_error;
     if(pds==true)
-    {   progress_bar_error=pthread_create(&progress_display_thread,NULL,(THREADFUNCPTR) &core_class::display_training_progress,NULL);}
-    for(int a=0;a<error.size();a++)
-    {
-        if(error[a])
-        {   cout << "\nThread "<<a<< " creation failed : " << strerror(error[a]);}
-    }
-    if(pds==true)
-    {
-        if(progress_bar_error)
-        {   cout<<"\nprogress bar thread creation failed!";}
-    }
+    {   progress_diaplay_thread=new thread(&core_class::display_training_progress,this);}
     for(int a=0;a<required_no_of_threads;a++)
-    {   error[a]=pthread_join(threadIds[a],NULL);}
+    {   thread_vec[a]->join();}
     //memory_optimization6 : next three lines
     for(int a=0;a<lpp_solver_vec.size();a++)
-    {   free(lpp_solver_vec[a]);}
+    {   delete lpp_solver_vec[a];}
     lpp_solver_vec.clear();
-    threadIds.clear();
-    error.clear();
+    thread_vec.clear();
     if(pds==true)
-    {   progress_bar_error=pthread_join(progress_display_thread,NULL);}
+    {   progress_diaplay_thread->join();}
     time_t end=time(0);
     message.clear();
     message="\ntime taken for training: "+to_string(end-begin);
@@ -2087,8 +2074,8 @@ void core_class::display_training_progress()
         float x=shared_block_data_obj.no_of_c_datapacks_completed,y=shared_block_data_obj.total_c_datapacks;
         struct winsize w;
         ioctl(0,TIOCGWINSZ,&w);
-        float percentage=(x/y)*100;
-        system("clear");    
+        float percentage=(x/y)*100;  
+        clrscr(); 
         cout<<"\nprogress: ";
         float hl=w.ws_col/2;
         float ratio=100/hl;
@@ -2282,6 +2269,8 @@ void core_class::train(nn_core_data_package_class* data_pack,bool network_avail_
 void core_class::only_testing(nn_core_data_package_class* data_pack,int train_test_predict)
 {
     datapack_analyzer(data_pack);//function checked!
+    //predict(data_pack);//mormal prediction
+    //comment the next lines if you want normal prediction.
     //filtering data according to labels
     filter(data_pack,train_test_predict);//f_train_data pack gets created here.
     //memory_optimization5 : the next two lines are added
@@ -2289,6 +2278,7 @@ void core_class::only_testing(nn_core_data_package_class* data_pack,int train_te
     data_pack->labels.clear();
     cout<<"\n\n\nONLY TESTING MODE:";
     testing_for_each_label();
+    
 }
 
 void core_class::test()
@@ -2372,8 +2362,8 @@ void core_class::predict_progress_bar()
         {
             struct winsize w;
             ioctl(0,TIOCGWINSZ,&w);
-            float percentage=(x/y)*100;   
-            system("clear");
+            float percentage=(x/y)*100;
+            clrscr();
             cout<<"\nprogress: ";
             float hl=w.ws_col/2;
             float ratio=100/hl;
@@ -2401,10 +2391,9 @@ void core_class::predict(nn_core_data_package_class* data_pack)
     float label;
     shared_block_data_obj.predict_progress_bar_denominator=data_pack->data.size();
         
-    pthread_t predict_progress_bar_thread;
-    int predict_progress_bar_error;
+    thread* predict_progress_bar_thread;
     if(pds==true)
-    {   predict_progress_bar_error=pthread_create(&predict_progress_bar_thread,NULL,(THREADFUNCPTR) &core_class::predict_progress_bar,NULL);}
+    {   predict_progress_bar_thread=new thread(&core_class::predict_progress_bar,this);}
         
     for(int a=0;a<data_pack->data.size();a++)
     {
@@ -2426,7 +2415,7 @@ void core_class::predict(nn_core_data_package_class* data_pack)
         shared_block_data_obj.predict_progress_bar_numerator++;
     }
     if(pds==true)
-    {   predict_progress_bar_error=pthread_join(predict_progress_bar_thread,NULL);}
+    {   predict_progress_bar_thread->join();}
     //cout<<"accuracy= "<<network1.return_accuracy()<<endl;
     out_stream.close();
     cout<<"\nPrediction complete, check the file prediction_result.csv\n";
@@ -2434,7 +2423,7 @@ void core_class::predict(nn_core_data_package_class* data_pack)
 
 void core_class::make_prediction_on_user_entered_data()
 {
-    system("clear");
+    clrscr();
     char continue1='y';
     vector<float> data_vector;
     float label;
@@ -2552,9 +2541,7 @@ void core_class::start_core()//train_test_predict=1//train_test_predic is requir
     {
         if(load_network_if_available(0,0,true,network_save_file_name)==true && train_test_predict==2)//network avail,vaild label not avail,predic mode
         {   
-            //predict(data_pack);
             only_testing(data_pack,train_test_predict);
-            //testing_for_each_label(data_pack);
         }
         else
         {   
@@ -2591,4 +2578,10 @@ core_class::core_class(int core_aim1,int core_no1,int parent_segment_aim1,int pa
         message="Failed to set core number and core aim as id_lock=true";
         print_message();
     }
+}
+
+void core_class::clrscr()
+{
+    cout << "\033[2J\033[1;1H";
+    //system("clear");
 }
