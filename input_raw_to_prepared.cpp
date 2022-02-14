@@ -68,13 +68,11 @@ void read_data_from_file(raw_data* rw_data)
     while(raw_data_stream)
     {
         raw_data_stream>>line;
-        if(raw_data_stream.eof()){
-            break;
-        }
+        if(raw_data_stream.eof())
+        {   break;}
         //to remove the id line. //deleted if(count>0)
         breaker(rw_data,line);
         //count++; //for just counting the no of lines in the file //required if if(count>0) line to remove the id line
-        //cout<<line<<endl;
     }
 }
 
@@ -159,7 +157,7 @@ void core_starter(string &file_name_local,int &test_train_predict,float &data_di
     }
     //display_prepared_data(&data_pack);
     core_class core1(0,0,0,0,"default_core");
-    
+    cout<<"\nsize="<<data_pack.data.size();
     core1.add_data(&data_pack,test_train_predict,data_division,network_save_file_name);
     core1.start_core();
 }

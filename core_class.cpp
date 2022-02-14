@@ -1875,6 +1875,7 @@ void core_class::simplex_solver_data_entry_point(vector<nn_core_filtered_data> f
         {
             while(sum_total_not_firing_data>=f_data_pack[a].data.size())
             {
+                //cout<<"\ncheck4="<<f_data_pack[a].data.size()<<" "<<sum_total_not_firing_data;
                 sum_total_not_firing_data=sum_total_not_firing_data-f_data_pack[a].data.size();//cout<<"check2";
                 no_of_c_data_packs_needed++;
             }
