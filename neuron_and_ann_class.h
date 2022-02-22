@@ -15,7 +15,7 @@ ANN class
 
 using namespace std;
 
-static int firing_point; //30 40 90
+//static int firing_point; //30 40 90
 
 static pthread_mutex_t lock;
 
@@ -24,8 +24,10 @@ class neuron{
     int id;
     bool input_id,output_id;
     bool fire_status=false;
-    float data,fp;
+    float data;
+    int label;//this is not the index
     public:
+    float firing_point=0;
     
     void set_neuron_identity(int i,bool i_id,bool o_id)
     {
@@ -41,7 +43,6 @@ class neuron{
         if(d>firing_point){//i had to change it because of the private solver to -30
             fire_status=true;
         }
-        fp=firing_point;
     }
 
     void change_fire_status(bool s)
@@ -58,9 +59,6 @@ class neuron{
     
     float return_data()
     {   return data;}
-
-    float return_firing_point()
-    {   return fp;}
 };
 
 struct path_struct{
@@ -71,40 +69,19 @@ struct path_struct{
 
 class ann{
     private:
-    float accuracy=0;
     int label_neuron_to_be_fired_id=0;
     bool label_neuron_reset_status=false;
-   
-    float correct=0;
-    int total=0;
     
     public:
     vector<float> elements;
-    vector<nn_core_filtered_data> f_data_vec_for_elimination_algorithm;
-    void set_data_for_elimination_algorithm(vector<nn_core_filtered_data> f_data_vec)
-    {   f_data_vec_for_elimination_algorithm=f_data_vec;}
 
     void set_elements_vector(vector<float> e)
     {   elements=e;}
-
-    float return_label_for_firing_neuron_index(int index)
-    {   return elements[index];}
-    
-    void enter_label_neuron_to_be_fired(int label,vector<float> id){
-        label_neuron_reset_status=true;
-        for(int a=0;a<id.size();a++)
-        {
-            if(id[a]==label)
-            {   label_neuron_to_be_fired_id=a;}
-            output_neurons[a].reset_fire_status();
-        }
-    }    
 
     vector<neuron> input_neurons;
     vector<neuron> output_neurons;
     vector<float> mean_buffer;//what the fuck is this????
     vector<path_struct> path;
-    bool predict_mode=false;
 
     int return_no_of_paths()
     {   return path.size();}
@@ -184,7 +161,7 @@ class ann{
         return output;
     }
 
-   void propagate(){
+   vector<neuron> propagate(){
         float summation=0;
         vector<float> summation_vec;
         vector<int> total_no_of_fires_of_paths;
@@ -195,13 +172,13 @@ class ann{
         {
             summation=0;
             summation_vec.clear();
-            firing_point=0;
+            output_neurons[a].firing_point=0;
             for(int c=0;c<path.size();c++)
             {
                 float summation_temp=0;
                 if(path[c].output_neuron_id==a)
                 {
-                    firing_point+=50;
+                    output_neurons[a].firing_point+=50;
                     for(int d=0;d<path[c].weight_matrix.size();d++)//weight matrix size = input neuron size
                     {
                         summation_temp=summation_temp+input_neurons[d].return_data()*path[c].weight_matrix[d]; //need to be modified...................................
@@ -210,12 +187,12 @@ class ann{
                     if(summation_temp>500 || summation_temp<-500)//1000
                     {
                         summation_temp=0;
-                        firing_point-=50;
+                        output_neurons[a].firing_point-=50;
                     }
                     else if(summation_temp>0&&summation_temp<40)
                     {
                         summation_temp=0;
-                        firing_point-=50;
+                        output_neurons[a].firing_point-=50;
                     }
                     //cout<<"\nsummation_temp1= "<<summation_temp;
                     summation_temp=((atan(summation_temp)*180/3.1415)/90)*100;
@@ -224,7 +201,7 @@ class ann{
                     summation=summation+summation_temp;
                 }
             }
-            if(summation-firing_point>100000)
+            if(summation-output_neurons[a].firing_point>100000)
             {   summation=0;}
             if(summation>=100000)
             {   summation=0;}
@@ -234,144 +211,8 @@ class ann{
             //counter for df and nf.
             if(output_neurons[a].return_fire_status()==true)
             {   no_of_neurons_fired++;}
-            //democracy module 
-            /*int votes=0;
-            for(int b=0;b<summation_vec.size();b++)
-            {
-                if(summation_vec[a]>70)
-                {
-                    votes++;
-                }
-            }
-            if(votes>=summation_vec.size()/2)
-            {   
-                output_neurons[a].set_data(summation);
-                output_neurons[a].change_fire_status(true);
-            }
-            else
-            {
-                output_neurons[a].set_data(summation);
-                output_neurons[a].change_fire_status(false);
-            }*/
         }
-        //checker for df
-        if(no_of_neurons_fired>1)
-        {
-            vector<neuron*> temp_neuron_vect;
-            neuron *temp_neuron;
-            temp_neuron_vect.clear();
-            for(int b=0;b<output_neuron_size();b++)
-            {
-                //cout<<"\nsummation= "<<output_neurons[b].return_data()<<" label_neuron_to_be_fired_id= "<<label_neuron_to_be_fired_id<<"b= "<<b;
-                //cout<<" firing_point= "<<output_neurons[b].return_firing_point();
-                if(output_neurons[b].return_fire_status()==true)
-                {
-                    temp_neuron_vect.push_back(&output_neurons[b]);
-                }
-            }
-            //sorting
-            for(int b=0;b<temp_neuron_vect.size();b++)
-            {
-                for(int c=0;c<temp_neuron_vect.size();c++)
-                {
-                    if((temp_neuron_vect[b]->return_data()-temp_neuron_vect[b]->return_firing_point()) > (temp_neuron_vect[c]->return_data()-temp_neuron_vect[c]->return_firing_point()))
-                    {
-                        temp_neuron=temp_neuron_vect[b];
-                        temp_neuron_vect[b]=temp_neuron_vect[c];
-                        temp_neuron_vect[c]=temp_neuron;
-                    }
-                }
-            }
-            for(int b=0;b<temp_neuron_vect.size();b++)
-            {
-                //cout<<"\nsummation= "<<temp_neuron_vect[b]->return_data();
-                //cout<<" firing_point= "<<temp_neuron_vect[b]->return_firing_point();
-                if(b==0)
-                {   temp_neuron_vect[b]->change_fire_status(true);}
-                else
-                {   temp_neuron_vect[b]->change_fire_status(false);}
-            }
-        }//nf analizer
-        else if(no_of_neurons_fired==0)
-        {
-            vector<neuron*> neuron_temp_vect;
-            neuron *neuron_temp;
-            neuron_temp_vect.clear();
-            for(int a=0;a<output_neuron_size();a++)
-            {   neuron_temp_vect.push_back(&output_neurons[a]);}
-            //sorting
-            for(int a=0;a<output_neuron_size();a++)
-            {
-                for(int b=0;b<output_neuron_size();b++)
-                {
-                    if(neuron_temp_vect[a]->return_data()>neuron_temp_vect[b]->return_data())
-                    {
-                        neuron_temp=neuron_temp_vect[a];
-                        neuron_temp_vect[a]=neuron_temp_vect[b];
-                        neuron_temp_vect[b]=neuron_temp;
-                    }
-                }
-            }
-            for(int a=0;a<neuron_temp_vect.size();a++)
-            {
-                if(neuron_temp_vect[a]->return_firing_point()<100000)
-                {   neuron_temp_vect[a]->change_fire_status(true);break;}
-            }
-        }
-        if(predict_mode==false)
-        {   accuracy_calc(label_neuron_to_be_fired_id);}
-    }
-    int double_fire=0,all_not_fired=0,wrongly_fired=0;
-    void accuracy_calc(int label_neuron_id){
-        int status=0;
-        label_neuron_reset_status=false;
-        total++;
-        if(output_neurons[label_neuron_id].return_fire_status()==true)
-        {
-            for(int a=0;a<output_neuron_size();a++)//for checking multiple fire status.
-            {
-                if(a==label_neuron_id)
-                {   continue;}
-                if(output_neurons[a].return_fire_status()==true)
-                {
-                    status++;
-                }
-            }
-            if(status==0)
-            {
-                correct++;
-            }
-            else
-            {   double_fire++;}
-        }
-        else{
-            int count=0;
-            for(int a=0;a<output_neurons.size();a++)
-            {
-                if(output_neurons[a].return_fire_status()==false)
-                {   count++;}
-            }
-            if(count==output_neuron_size())
-            {   all_not_fired++;}
-            else
-            {   wrongly_fired++;}
-        }
-        accuracy=(correct/total)*100;
-    }
-
-    float return_accuracy()
-    {   cout<<"\ncorrect= "<<correct<<" incorrect= "<<total-correct<<" total= "<<total<<" double_fire= "<<double_fire<<" all_not_fired= "<<all_not_fired<<" wrongly_fired= "<<wrongly_fired<<endl;
-        return accuracy;
-    }
-
-    void reset_statistics()
-    {
-        correct=0;
-        total=0;
-        double_fire=0;
-        all_not_fired=0;
-        wrongly_fired=0;
-        accuracy=0;
+        return output_neurons;
     }
 };
 #endif

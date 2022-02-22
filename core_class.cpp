@@ -985,62 +985,6 @@ void simplex_solver_data_preparation_class::cdp_spliter(vector<converted_data_pa
     //int fg;cin>>fg;
 }
 
-void simplex_solver_data_preparation_class::check_path_quality()
-{
-    //cout<<"\n\nf_data_labels= "<<network->f_data_vec_for_elimination_algorithm.size();
-    //cout<<"\ndata size= "<<network->f_data_vec_for_elimination_algorithm[0].data.size();
-    vector<bool> label_fire_status;//name is confusing, i know
-    vector<bool> pass_status(network->f_data_vec_for_elimination_algorithm.size());
-    float pass_ratio=2;//2
-    for(int a=0;a<network->f_data_vec_for_elimination_algorithm.size();a++)
-    {
-        if(network->path.at(network->path.size()-1).output_neuron_id==a)
-        {   label_fire_status.push_back(true);}
-        else
-        {   label_fire_status.push_back(false);}
-    }
-    int correct=0,total=0;
-    for(int a=0;a<network->f_data_vec_for_elimination_algorithm.size();a++)
-    {
-        
-        for(int b=0;b<network->f_data_vec_for_elimination_algorithm[a].data.size();b++)
-        {
-            float summation_temp=0;
-            for(int c=0;c<network->path.at(network->path.size()-1).weight_matrix.size();c++)
-            {   summation_temp+=network->path.at(network->path.size()-1).weight_matrix[c]*network->f_data_vec_for_elimination_algorithm[a].data[b][c];}
-            
-            summation_temp=((atan(summation_temp)*180/3.1415)/90)*100;
-            if(label_fire_status[a]==true)
-            {
-                if(summation_temp>0)
-                {   correct++;}
-            }
-            else if(label_fire_status[a]==false)
-            {
-                if(summation_temp<0)
-                {   correct++;}
-            }
-            total++;
-        }
-        /*if(correct>=((float)network->f_data_vec_for_elimination_algorithm[a].data.size())/pass_ratio)
-        {   pass_status[a]=true;}
-        else
-        {   pass_status[a]=false;}*/
-    }
-    if(correct<total/2)
-    {   network->path.pop_back();}
-    /*for(int a=0;a<pass_status.size();a++)
-    {
-        if(pass_status[a]==false)
-        {
-            network->path.pop_back();
-            break;
-        }
-    }*/
-    //cout<<"\n\n\nno_of_paths= "<<network->path.size();
-    //int gh;cin>>gh;
-}
-
 void simplex_solver_data_preparation_class::lp_solver()
 {
     //the main conflicting_data_outer cleaner
@@ -1171,17 +1115,15 @@ simplex_solver_data_preparation_class::simplex_solver_data_preparation_class(vec
     //cdp=cdps;
 }
 
-
 //core_class
-bool core_class::check_if_datapack_has_valid_labels(nn_core_data_package_class* data_pack)
+
+vector<neuron> core_class::propagate(vector<float> input_attributes_value)
 {
-    if(data_pack->data.size()>data_pack->labels.size())
-    {   return false;}
-    else
-    {   return true;}
+    network1.enter_data_in_the_network(input_attributes_value);
+    return network1.propagate();
 }
 
-void core_class::save_network()
+void core_class::save_core()
 {
     time_t theTime = time(NULL);
     struct tm *aTime = localtime(&theTime);
@@ -1213,10 +1155,10 @@ void core_class::save_network()
     string core_aim_str=to_string(core_aim);
     string core_no_str=to_string(core_no);
     net_savefile_id=core_aim_str+core_no_str+year_str+month_str+day_str+hr_str+min_str+sec_str;
-    string net_savefile_name="network-"+net_savefile_id+".csv";
-    ofstream file1(net_savefile_name,ios::out);
+    core_save_file_name="core-"+net_savefile_id+".csv";
+    ofstream file1(core_save_file_name,ios::out);
     file1<<"FILE_NAME:,\n";
-    file1<<"name=,"<<net_savefile_name<<",\n";
+    file1<<"name=,"<<core_save_file_name<<",\n";
     file1<<"BASIC_SAVEFILE_INFO:,\n";
     file1<<",network_save_id,core_aim,core_no,year,month,day,hour,minute,sec,\n";
     file1<<"network_save_id,"<<net_savefile_id<<","<<core_aim<<","<<core_no<<","<<year_str<<","<<month_str<<","<<day_str<<","<<hr_str<<","<<min_str<<","<<sec_str<<",\n";
@@ -1573,177 +1515,6 @@ void core_class::network_analyzer()
     ns.mean_buffer_size=network1.input_neurons.size();//what the fuck is this????
 }
 
-void core_class::datapack_analyzer(nn_core_data_package_class* data_pack)
-{
-    if(data_pack->analyze_status==false)
-    {
-        ds.no_of_elements_in_each_record=data_pack->data[0].size();
-        vector<int> labels;
-        bool found=false;
-        for(int a=0;a<data_pack->data.size();a++)
-        {
-            found=false;
-            for(int b=0;b<labels.size();b++)
-            {
-                if(labels[b]==data_pack->labels[a])
-                {
-                    found=true;
-                    break;
-                }
-            }
-            if(found==false)
-            {
-                labels.push_back(data_pack->labels[a]);
-            }
-        }
-        ds.no_of_labels=labels.size();
-        for(int a=0;a<labels.size();a++)
-        {
-            ds.elements.push_back(labels[a]);
-        }
-        data_pack->analyze_status=true;
-    }
-}
-
-void core_class::network_structure_modifier()
-{
-    try{
-        if(ns.no_of_input_neuron>ds.no_of_elements_in_each_record)
-        {
-            throw("network has more neuron than required by the data");//needs working here. UNDER CONSTRUCTION.
-            save_network();
-        }
-        else
-        {
-            network1.set_no_of_input_neuron(ds.no_of_elements_in_each_record);
-            network1.set_no_of_output_neuron(ds.no_of_labels);
-        }
-    }
-    catch(string s)
-    {   cout<<s<<endl;}
-}
-
-void core_class::shuffler(nn_core_filtered_data* f_data)
-{
-    vector<shuffling_data> shuffling_data_temp_vector;
-    shuffling_data shuffling_data_temp;
-    shuffling_data_temp_vector.clear();
-    //pushing the data the the shuffling vector
-    for(int a=0;a<f_data->data.size();a++)
-    {
-        shuffling_data_temp.temp_data=f_data->data[a];
-        shuffling_data_temp.temp_label=f_data->label;
-        shuffling_data_temp_vector.push_back(shuffling_data_temp);
-    }
-    //shuffeling the data
-    random_shuffle(shuffling_data_temp_vector.begin(),shuffling_data_temp_vector.end());
-    //pushing the data in the f_data
-    f_data->data.clear();
-    for(int a=0;a<shuffling_data_temp_vector.size();a++)
-    {
-        f_data->data.push_back(shuffling_data_temp_vector[a].temp_data);
-        f_data->label=shuffling_data_temp_vector[a].temp_label;
-    }
-}
-
-void core_class::f_data_viewer(string str,vector<nn_core_filtered_data> f_data)
-{
-    message.clear();
-    message="\n"+str+"\n";
-    print_message();
-    for(int a=0;a<f_data.size();a++)
-    {
-        message.clear();
-        message="\nlabel= "+to_string(f_data[a].label)+" data_size= "+to_string(f_data[a].data.size());
-        print_message();
-    }
-}
-
-void core_class::filter(nn_core_data_package_class* data_pack,int train_test_predict)
-{
-    nn_core_filtered_data f_data;
-    vector<nn_core_filtered_data> f_data_vector;
-    for(int a=0;a<ds.elements.size();a++)
-    {
-        f_data.data.clear();
-        for(int b=0;b<data_pack->labels.size();b++)
-        {
-            if(ds.elements[a]==data_pack->labels[b])
-            {
-                f_data.data.push_back(data_pack->data[b]);
-                f_data.label=data_pack->labels[b];
-                f_data.str=data_pack->label_str;
-            }
-        }
-        f_data_vector.push_back(f_data);
-    }
-    //calling the shuffler
-    for(int a=0;a<f_data_vector.size();a++)
-    {
-        shuffler(&f_data_vector[a]);//has same size as that is of no of element
-    }
-    //copying the data to f_train_data and f_test_data
-    for(int a=0;a<f_data_vector.size();a++)
-    {
-        nn_core_filtered_data f_data_temp;
-        //copying data to f_train_data
-        int limit=0;
-        if(train_test_predict==0)//for training
-        {   limit=f_data_vector[a].data.size();}
-        else if(train_test_predict==1)//for testing
-        {   limit=f_data_vector[a].data.size()/data_division;}
-        //for(int b=0;b<f_data_vector[a].data.size()/data_division;b++)
-        for(int b=0;b<limit;b++)
-        {
-            f_data_temp.data.push_back(f_data_vector[a].data[b]);
-        }
-        f_data_temp.label=f_data_vector[a].label;
-        f_data_temp.str=f_data_vector[a].str;
-        f_train_data.push_back(f_data_temp);
-        f_data_temp.data.clear();
-        //copying data to f_test_data
-        //memory_optimization1
-        /*int begin=0;
-        if(train_test_predict==0)//for training 
-        {   begin=f_data_vector[a].data.size();}
-        else if(train_test_predict==1)//for testing
-        {   begin=f_data_vector[a].data.size()/data_division;}
-        //for(int b=f_data_vector[a].data.size()/data_division;b<f_data_vector[a].data.size();b++)
-        for(int b=begin;b<f_data_vector[a].data.size();b++)
-        {
-            f_data_temp.data.push_back(f_data_vector[a].data[b]);
-        }
-        f_data_temp.label=f_data_vector[a].label;
-        f_test_data.push_back(f_data_temp); 
-        f_data_temp.data.clear();
-        */
-    }
-    //copying the data to the data_pack s
-    for(int a=0;a<f_data_vector.size();a++)
-    {
-        //copying data to testing data
-        int begin=0;
-        if(train_test_predict==0)//for training 
-        {   begin=f_data_vector[a].data.size();}
-        else if(train_test_predict==1)//for testing
-        {   begin=f_data_vector[a].data.size()/data_division;}
-        //for(int b=f_data_vector[a].data.size()/data_division;b<f_data_vector[a].data.size();b++)
-        for(int b=begin;b<f_data_vector[a].data.size();b++)
-        {
-            vector<float> temp;
-            for(int c=0;c<f_data_vector[a].data[b].size();c++)
-            {
-                temp.push_back(f_data_vector[a].data[b][c]);
-            }
-            test_data.data.push_back(temp);
-            temp.clear();
-            test_data.label_str=f_data_vector[a].str;
-            test_data.labels.push_back(f_data_vector[a].label);
-        }
-    }
-    f_data_vector.clear();//if memory_optimization1 is removed and testing_for_each_label_is_enabled this must be removed
-}
-
 void core_class::big_c_datapack_handler(vector<converted_data_pack> &cdp)//passing the vector by reference //this function might be a temporary offer //this is for preventing 0:0 bug
 {
     int limit=50;//50
@@ -1850,7 +1621,7 @@ void core_class::big_c_datapack_handler(vector<converted_data_pack> &cdp)//passi
     print_message();
 }
 
-void core_class::simplex_solver_data_entry_point(vector<nn_core_filtered_data> f_data_pack,datapack_structure_defination* ds)
+void core_class::simplex_solver_data_entry_point(vector<nn_core_filtered_data> f_data_pack,int no_of_threads)
 {
     vector<converted_data_pack> c_datapacks;
     converted_data_pack c_datapack;
@@ -2011,33 +1782,28 @@ void core_class::simplex_solver_data_entry_point(vector<nn_core_filtered_data> f
     print_message();
     //this is the place for parallelization process.
     //int required_no_of_threads;//=sysconf(_SC_NPROCESSORS_ONLN);//no of threads
-        //c_datapacks division
-    //required_no_of_threads=2;//15
-    //set_the_no_of_threads_required(c_datapacks.size());
-    required_no_of_threads=15;//15
     vector<vector<converted_data_pack>> c_datapacks_vector;
     message.clear();
-    message="\narranging c_datapacks for "+to_string(required_no_of_threads)+" threads..........";
+    message="\narranging c_datapacks for "+to_string(no_of_threads)+" threads..........";
     print_message();
-    c_data_packs_division_for_multi_threading(c_datapacks_vector,c_datapacks,required_no_of_threads);
+    c_data_packs_division_for_multi_threading(c_datapacks_vector,c_datapacks,no_of_threads);
     point1:
-    if(required_no_of_threads!=c_datapacks_vector.size())
+    if(no_of_threads!=c_datapacks_vector.size())
     {
         message.clear();
-        message="\n\nERROR!!! failed to set a valid number of threads. Try setting the value to "+to_string(c_datapacks_vector.size());
+        message="\n\nERROR!!! failed to set a valid number of threads. Setting the no_of_threads to "+to_string(c_datapacks_vector.size());
         print_message();
-        set_the_no_of_threads_required(0,true);//here 0 is just a random value to make this function call work
-        goto point1;
+        no_of_threads=c_datapacks_vector.size();
     }
     //memory_optimization4 : turn  vector<simplex_solver_data_preparation_class> to  vector<simplex_solver_data_preparation_class*>       
     vector<simplex_solver_data_preparation_class*> lpp_solver_vec;
     for(int a=0;a<c_datapacks_vector.size();a++)
     {
-        simplex_solver_data_preparation_class *lpp_solver=new simplex_solver_data_preparation_class(c_datapacks_vector[a],ds,&network1);//initializing the obj of the class   
+        simplex_solver_data_preparation_class *lpp_solver=new simplex_solver_data_preparation_class(c_datapacks_vector[a],&ds,&network1);//initializing the obj of the class   
         lpp_solver_vec.push_back(lpp_solver);
     }
-    vector<thread*> thread_vec(required_no_of_threads);
-    thread* progress_diaplay_thread;
+    vector<thread*> thread_vec(no_of_threads);
+    //thread* progress_diaplay_thread;
     message.clear();
     message=" lpp_solver_vec size="+to_string(lpp_solver_vec.size());
     print_message();
@@ -2048,20 +1814,20 @@ void core_class::simplex_solver_data_entry_point(vector<nn_core_filtered_data> f
     //cin.get();//pause
     time_t begin=time(0);
     //lpp solvers will start now.........
-    for(int a=0;a<required_no_of_threads;a++)
+    for(int a=0;a<no_of_threads;a++)
     {   thread_vec[a]=new thread(&simplex_solver_data_preparation_class::lp_solver,lpp_solver_vec[a]);}
     //int progress_bar_error;
-    if(pds==true)
-    {   progress_diaplay_thread=new thread(&core_class::display_training_progress,this);}
-    for(int a=0;a<required_no_of_threads;a++)
+    //if(pds==true)
+    //{   progress_diaplay_thread=new thread(&core_class::display_training_progress,this);}
+    for(int a=0;a<no_of_threads;a++)
     {   thread_vec[a]->join();}
     //memory_optimization6 : next three lines
     for(int a=0;a<lpp_solver_vec.size();a++)
     {   delete lpp_solver_vec[a];}
     lpp_solver_vec.clear();
     thread_vec.clear();
-    if(pds==true)
-    {   progress_diaplay_thread->join();}
+    //if(pds==true)
+    //{   progress_diaplay_thread->join();}
     time_t end=time(0);
     message.clear();
     message="\ntime taken for training: "+to_string(end-begin);
@@ -2146,355 +1912,22 @@ void core_class::c_data_packs_division_for_multi_threading(vector<vector<convert
     print_message();
 }
 
-bool core_class::ds_ns_have_same_labels()
+void core_class::network_structure_modifier()
 {
-    if(ds.elements.size()<=ns.elements.size())
-    {   
-        int count=0;
-        for(int a=0;a<ds.elements.size();a++)
+    try{
+        if(ns.no_of_input_neuron>ds.no_of_elements_in_each_record)
         {
-            for(int b=0;b<ns.elements.size();b++)
-            {
-                if(ds.elements[a]==ns.elements[b])
-                {   count++;}
-            }
-        }
-        //cout<<"count= "<<count<<" ds= "<<ds.elements.size()<<"ns= "<<ns.elements.size()<<endl;
-        if(count==ds.elements.size() && count==ns.elements.size())
-        {   return true;}
-        else
-        {   return false;}//means current ds is different from previous ds which was used to train the network
-    }
-    else 
-    {   return false;}//means current ds is different from previous ds which was used to train the network
-}
-
-void core_class::train(nn_core_data_package_class* data_pack,bool network_avail_status,int train_test_predict)
-{
-    datapack_analyzer(data_pack);//function checked!
-    //filtering data according to labels
-    filter(data_pack,train_test_predict);//f_train_data pack gets created here.
-    //memory_optimization5 : the next two lines are added
-    vector<nn_core_filtered_data> f_data_for_elimination_algorithm;
-    nn_core_filtered_data f_data_temp;
-    /*int limit_for_elimination_algorithm=20;
-    for(int a=0;a<f_train_data.size();a++)
-    {
-        int size_of_data_for_each_label=f_train_data[a].data.size()/limit_for_elimination_algorithm;
-        if(size_of_data_for_each_label==0)
-        {   size_of_data_for_each_label=f_train_data[a].data.size();}
-        for(int b=0;b<f_train_data[a].data.size();b+=size_of_data_for_each_label)
-        {
-            f_data_temp.data.push_back(f_train_data[a].data[b]);
-            f_data_temp.label=f_train_data[a].label;
-            f_data_temp.str=f_train_data[a].str;
-        }
-        f_data_for_elimination_algorithm.push_back(f_data_temp);
-    }
-    network1.set_data_for_elimination_algorithm(f_data_for_elimination_algorithm);*/
-
-    data_pack->data.clear();
-    data_pack->labels.clear();
-    if(network_avail_status==true)
-    {
-        if(ds_ns_have_same_labels()==true)//training by batching
-        {
-            if(train_test_predict==0)//only training
-            {
-                message.clear();
-                message="\nnetwork save file found. So training by batching without testing.";
-                print_message();
-                simplex_solver_data_entry_point(f_train_data,&ds);
-                save_network();
-                message.clear();
-                message="\nnetwork saved";
-                print_message();
-            }
-            else if(train_test_predict==1)//training with testing 
-            {
-                message.clear();
-                message="\nnetwork save file found. So training by batching with testing.";
-                print_message();
-                simplex_solver_data_entry_point(f_train_data,&ds);
-                save_network();
-                message.clear();
-                message="\nnetwork saved";
-                print_message();
-                //testing_for_each_label();
-                test();
-            }
+            throw("network has more neuron than required by the data");//needs working here. UNDER CONSTRUCTION.
+            save_core();
         }
         else
         {
-                //1. new variable is added to the data. Or adding new label.
-                cout<<"ERROR!!!  The currently loaded network file is not associated with the currently loaded data \nfrom file you have selected as input source.";
+            network1.set_no_of_input_neuron(ds.no_of_elements_in_each_record);
+            network1.set_no_of_output_neuron(ds.no_of_labels);
         }
     }
-    else if(network_avail_status==false)
-    {
-        if(train_test_predict==0)//only training
-        {
-            message.clear();
-            message="\nnetwork save file not found. Brand new training without testing.";
-            print_message();
-            network_structure_modifier();
-            simplex_solver_data_entry_point(f_train_data,&ds);
-            save_network();
-            message.clear();
-            message="\nnetwork saved";
-            print_message();
-        }
-        else if(train_test_predict==1)//training with testing 
-        {
-            message.clear();
-            message="\nnetwork save file not found. Brand new training with testing.";
-            print_message();
-            network_structure_modifier();
-            simplex_solver_data_entry_point(f_train_data,&ds);
-            save_network();
-            message.clear();
-            message="\nnetwork saved";;
-            print_message();
-            test();
-            //testing_for_each_label();
-        }
-        else if(train_test_predict==4)//auto training mode
-        {
-            int initial_data_size=10;//trains on this many daya after testing
-            vector<nn_core_filtered_data> f_data_batch;
-            
-        }
-    }
-}
-
-void core_class::only_testing(nn_core_data_package_class* data_pack,int train_test_predict)
-{
-    datapack_analyzer(data_pack);//function checked!
-    //predict(data_pack);//mormal prediction
-    //comment the next lines if you want normal prediction.
-    //filtering data according to labels
-    filter(data_pack,train_test_predict);//f_train_data pack gets created here.
-    //memory_optimization5 : the next two lines are added
-    data_pack->data.clear();
-    data_pack->labels.clear();
-    cout<<"\n\n\nONLY TESTING MODE:";
-    testing_for_each_label();
-    
-}
-
-void core_class::test()
-{
-    cout<<"\nTESTING PHASE"<<endl;
-    // format is yes and then no naswers.
-    ofstream file1("weight_matrix.csv",ios::out);
-    file1<<"path id,output_neuron_id,weight matrix: ,";
-    for(int b=0;b<network1.path[0].input_neuron_id.size();b++)
-    {   file1<<network1.path[0].input_neuron_id[b]<<":";}
-    file1<<"\n";
-    for(int a=0;a<network1.path.size();a++)
-    {
-        file1<<network1.path[a].path_id<<",";
-        file1<<network1.path[a].output_neuron_id<<":,";
-        for(int b=0;b<network1.path[a].weight_matrix.size();b++)
-        {   file1<<network1.path[a].weight_matrix[b]<<";";}
-        file1<<"\n";
-    }
-    file1.close();
-    cout<<"weight matrix saved\n";
-    //entering data to network.
-    for(int a=0;a<test_data.data.size();a++)
-    {
-        network1.enter_data_in_the_network(test_data.data[a]);
-        network1.enter_label_neuron_to_be_fired(test_data.labels[a],ds.elements);
-        network1.propagate();    
-    }
-    cout<<"accuracy= "<<network1.return_accuracy()<<endl;
-}
-//memory_optimization1
-void core_class::testing_for_each_label()
-{
-    cout<<"wrights="<<network1.return_no_of_paths();
-    nn_core_filtered_data f_data;
-    vector<nn_core_filtered_data> f_test_data;
-    for(int a=0;a<ds.elements.size();a++)
-    {
-        f_data.data.clear();
-        for(int b=0;b<test_data.labels.size();b++)
-        {
-            if(ds.elements[a]==test_data.labels[b])
-            {
-                f_data.data.push_back(test_data.data[b]);
-                f_data.label=test_data.labels[b];
-                f_data.str=test_data.label_str;
-            }
-        }
-        f_test_data.push_back(f_data);
-    }
-    ofstream *file1;
-    cout<<"\nTESTING FOR EACH LABELS: \n\n";
-    for(int a=0;a<f_test_data.size();a++)
-    {
-        //cout<<"\ntesting for data of label "<<f_test_data[a].label<<": str_label= "<<f_test_data[a].str;
-        string str="data";
-        str.append(to_string(a));
-        file1=new ofstream(str,ios::out);
-        network1.reset_statistics();
-        for(int b=0;b<f_test_data[a].data.size();b++)
-        {
-            for(int c=0;c<f_test_data[a].data[b].size();c++)
-            {   *file1<<f_test_data[a].data[b][c]<<";";}
-            *file1<<"\n";
-            network1.enter_data_in_the_network(f_test_data[a].data[b]);
-            network1.enter_label_neuron_to_be_fired(f_test_data[a].label,ds.elements);
-            network1.propagate();
-        }
-        *file1<<f_test_data[a].label<<",";
-        file1->close();
-        cout<<"accuracy= "<<network1.return_accuracy()<<endl;
-    }
-}
-
-void core_class::predict_progress_bar()
-{
-    while(shared_block_data_obj.predict_progress_bar_numerator<shared_block_data_obj.predict_progress_bar_denominator)
-    {
-        float x=shared_block_data_obj.predict_progress_bar_numerator,y=shared_block_data_obj.predict_progress_bar_denominator;
-        if(y!=0)
-        {
-            struct winsize w;
-            ioctl(0,TIOCGWINSZ,&w);
-            float percentage=(x/y)*100;
-            clrscr();
-            cout<<"\nprogress: ";
-            float hl=w.ws_col/2;
-            float ratio=100/hl;
-            float pl=percentage*hl/100;
-            for(int a=0;a<hl;a++)
-            {
-                if(a<pl)
-                {   cout<<"#";}
-                else
-                {   cout<<".";}
-            }
-            cout<<"  "<<percentage<<"%";
-            cout<<"  "<<shared_block_data_obj.predict_progress_bar_numerator<<" out of "<<shared_block_data_obj.predict_progress_bar_denominator<<" predictions complete"<<endl<<endl;
-            sleep(1);
-        }
-    }
-}
-
-void core_class::predict(nn_core_data_package_class* data_pack)
-{
-    cout<<"\nprediction going on......";
-    ofstream out_stream("prediction_result.csv",ios::out);
-    out_stream<<"data,label,\n";
-    network1.predict_mode=true;
-    float label;
-    shared_block_data_obj.predict_progress_bar_denominator=data_pack->data.size();
-        
-    thread* predict_progress_bar_thread;
-    if(pds==true)
-    {   predict_progress_bar_thread=new thread(&core_class::predict_progress_bar,this);}
-        
-    for(int a=0;a<data_pack->data.size();a++)
-    {
-        for(int b=0;b<data_pack->data[a].size();b++)
-        {   out_stream<<data_pack->data[a][b]<<",";}
-        network1.enter_data_in_the_network(data_pack->data[a]);
-        network1.reset_all_output_neurons();
-        //network1.enter_label_neuron_to_be_fired(data_pack->labels[a],network1.elements);
-        network1.propagate();
-        int fired_output_neuron_index=0;
-        for(int b=0;b<network1.output_neurons.size();b++)
-        {
-            bool status=network1.output_neurons[b].return_fire_status();
-            if(status==true)
-            {   fired_output_neuron_index=b;}
-        }
-        label=network1.return_label_for_firing_neuron_index(fired_output_neuron_index);
-        out_stream<<":"<<label<<",\n";
-        shared_block_data_obj.predict_progress_bar_numerator++;
-    }
-    if(pds==true)
-    {   predict_progress_bar_thread->join();}
-    //cout<<"accuracy= "<<network1.return_accuracy()<<endl;
-    out_stream.close();
-    cout<<"\nPrediction complete, check the file prediction_result.csv\n";
-}
-
-void core_class::make_prediction_on_user_entered_data()
-{
-    clrscr();
-    char continue1='y';
-    vector<float> data_vector;
-    float label;
-    while(continue1=='y'||continue1=='Y')
-    {
-        cout<<"\nEnter the "<<network1.input_neuron_size()<<" digit data: \n";
-        for(int a=0;a<network1.input_neuron_size();a++)
-        {   
-            float data;
-            cout<<"a"<<a<<"= ";
-            cin>>data;
-            data_vector.push_back(data);
-        }
-
-        network1.enter_data_in_the_network(data_vector);
-        network1.reset_all_output_neurons();
-        //network1.enter_label_neuron_to_be_fired(data_pack->labels[a],network1.elements);
-        network1.propagate();
-        int fired_output_neuron_index=0;
-        for(int b=0;b<network1.output_neurons.size();b++)
-        {
-            bool status=network1.output_neurons[b].return_fire_status();
-            if(status==true)
-            {   fired_output_neuron_index=b;}
-        }
-        label=network1.return_label_for_firing_neuron_index(fired_output_neuron_index);
-        cout<<"\nResult = "<<label<<endl;
-
-        data_vector.clear();
-        point1:
-        cout<<"\nDo you want to make prediction on another data? (y,n)";
-        cin>>continue1;
-        if(continue1!='N'&&continue1!='n'&&continue1!='y'&&continue1!='Y')
-        {
-            cout<<"\nWrong option!!!!";
-            goto point1;
-        }
-        //a menu should not have been in here.
-    }
-}
-
-void core_class::set_the_no_of_threads_required(int no_of_c_datapacks_after_big_datapack_handling/*=0*/,bool tried_before/*=false*/)//default parameters are defined in .h file only
-{
-    int no_of_physical_threads_in_cpu=sysconf(_SC_NPROCESSORS_ONLN);
-    int prefered_no_of_threads=no_of_physical_threads_in_cpu+11;//for good speed in i5 7200
-    char option;
-    point1:
-    if(tried_before==false)
-    {
-        cout<<"\n\nDo you want to manually set the no of threads? (y,n): ";
-        cin>>option;
-    }
-        
-    if(tried_before==false && (option=='n' || option=='N'))
-    {
-        if(no_of_c_datapacks_after_big_datapack_handling>prefered_no_of_threads)
-        {   required_no_of_threads=prefered_no_of_threads;}
-        else
-        {   required_no_of_threads=2;}
-    }
-    else if(option=='y' || option=='Y' || tried_before==true)
-    {
-        cout<<"\nSet the no of threads= ";
-        cin>>required_no_of_threads;
-    }
-    else
-    {
-        cout<<"\nWrong option!!";
-        goto point1;
-    }
+    catch(string s)
+    {   cout<<s<<endl;}
 }
 
 void core_class::print_message()
@@ -2505,64 +1938,7 @@ void core_class::print_message()
     pthread_mutex_unlock(&lock_1);
 }
 
-void core_class::start_core()//train_test_predict=1//train_test_predic is required for extra assurance
-{
-    message.clear();
-    message="\ncore_no= "+to_string(core_no)+" core_name="+core_name+" datapack_size= "+to_string((int)data_pack->data.size())+" started...";
-    print_message();
-    if(train_test_predict==1)
-    {   data_division=data_division1;}
-    if(check_if_datapack_has_valid_labels(data_pack)==true && train_test_predict<2)//true
-    {
-        bool network_avail_status=load_network_if_available(0,0,false,"");
-        train(data_pack,network_avail_status,train_test_predict);
-    }
-    else if(train_test_predict==3)//making prediction on used entered individual data.
-    {
-        bool network_load_status=load_network_if_available(0,0,true,network_save_file_name);
-        if(network_load_status==true)
-        {   
-            message.clear();
-            message="Network successfully loaded";
-            print_message();
-            make_prediction_on_user_entered_data();
-        }
-        else
-        {   
-            message.clear();
-            message="ERROR!!! failed to load network from the network file.";
-            print_message();
-        }
-    }
-    else if(train_test_predict==4)//auto training mode
-    {
-        train(data_pack,false,train_test_predict);
-    }
-    else
-    {
-        if(load_network_if_available(0,0,true,network_save_file_name)==true && train_test_predict==2)//network avail,vaild label not avail,predic mode
-        {   
-            only_testing(data_pack,train_test_predict);
-        }
-        else
-        {   
-            message.clear();
-            message="Invalid option";
-            print_message();
-        }//ERROR!!
-    }
-}
-
-void core_class::add_data(nn_core_data_package_class* data_pack1,int train_test_predict1,float data_division2,string network_save_file_name1)
-{
-    data_pack=data_pack1;
-    train_test_predict=train_test_predict1;
-    data_division1=data_division2;
-    network_save_file_name=network_save_file_name1;
-    cout<<"\ndata_pack= "<<data_pack->data.size()<<" train_test_predict="<<train_test_predict<<" data_division="<<data_division1<<" save_file_name="<<network_save_file_name;
-}
-
-core_class::core_class(int core_aim1,int core_no1,int parent_segment_aim1,int parent_segment_no1,string core_name1)
+core_class::core_class(int core_aim1,int core_no1,int parent_segment_aim1,int parent_segment_no1,string core_name1,datapack_structure_defination ds1)
 {
     if(id_lock==false)
     {
@@ -2572,6 +1948,8 @@ core_class::core_class(int core_aim1,int core_no1,int parent_segment_aim1,int pa
         parent_segment_no=parent_segment_no1;
         core_name=core_name1;
         id_lock=true;
+        ds=ds1;
+        network_structure_modifier();
     }
     else
     {  

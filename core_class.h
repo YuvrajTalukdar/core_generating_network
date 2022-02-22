@@ -29,7 +29,6 @@ struct shared_block_data//required for
     int predict_progress_bar_denominator=0;//required for prediction progress bar
     int no_of_c_datapacks_completed=0;//required for training progress bar
     int total_c_datapacks;//required for training progress bar
-
 };
 inline shared_block_data shared_block_data_obj;
 
@@ -204,7 +203,6 @@ class simplex_solver_data_preparation_class
     void cdp_spliter(vector<converted_data_pack*> &cdps,int index);
     public:
     static void cdp_viewer(converted_data_pack* cdp);
-    void check_path_quality();
     void lp_solver();
     bool cyclic_bug_present();
     simplex_solver_data_preparation_class(vector<converted_data_pack> &cdps,datapack_structure_defination* ds,ann* network1);
@@ -218,55 +216,36 @@ struct network_structure_defination{
     vector<float> elements;
 };
 
-class core_class{
+class core_class
+{
     private:
-    //core_data_for_multithreading
-    nn_core_data_package_class* data_pack;
-    int train_test_predict;
-    float data_division1;
-    string network_save_file_name;
-
+    //core identification information
     int core_no=0,core_aim=0;//this two must be changed using a function so that proper core is loaded
     int parent_segment_aim=0,parent_segment_no=0;
     string core_name;
     string core_save_file_name="NULL";//provided if core is loaded from a core/network savefile. Not set using constructor
     bool id_lock=false;
-
-    int required_no_of_threads;
+    //progress bar data
     int predict_progress_bar_numerator=0;//for the predict progress bar
     int predict_progress_bar_denominator=0;//for the predict progress bar
-    float data_division=1.5;
+    //training information
     ann network1;
     //simplex_solver_data_preparation_class lpp_solver;
-    datapack_structure_defination ds;
+    datapack_structure_defination ds;//for the data which will be processed by this particular core
     network_structure_defination ns;
-
-    bool check_if_datapack_has_valid_labels(nn_core_data_package_class* data_pack);//if a label is 0 than it is invalid
-
-    void save_network();
 
     bool load_network_if_available(int core_aim=0,int core_no=0,bool file_name_received=false,string file_name="");
 
-    void network_analyzer();
+    void network_structure_modifier();
 
-    void datapack_analyzer(nn_core_data_package_class* data_pack);//checked, it fills up the datapack_structure_defination ds. 
-
-    void network_structure_modifier();//this function may need further improvements
+    void network_analyzer();//it fills up the network_structure_defination ns based on the initialized network structure. 
 
     struct shuffling_data{
         vector<float> temp_data;
         int temp_label;
     };
 
-    void shuffler(nn_core_filtered_data* f_data);
-
-    void f_data_viewer(string str,vector<nn_core_filtered_data> f_data);
-
-    void filter(nn_core_data_package_class* data_pack,int train_test_predict);
-
     void big_c_datapack_handler(vector<converted_data_pack> &cdp);//passing the vector by reference //this function might be a temporary offer //this is for preventing 0:0 bug
-
-    void simplex_solver_data_entry_point(vector<nn_core_filtered_data> f_data_pack,datapack_structure_defination* ds);
 
     void display_training_progress();
 
@@ -274,37 +253,35 @@ class core_class{
 
     void c_data_packs_division_for_multi_threading(vector<vector<converted_data_pack>> &c_datapacks_vector,vector<converted_data_pack> &c_datapacks,int no_of_threads);
 
-    bool ds_ns_have_same_labels();
-
-    vector<nn_core_filtered_data> f_train_data;//f_test_data; //memory_optimization1
     nn_core_data_package_class test_data;
 
-    void train(nn_core_data_package_class* data_pack,bool network_avail_status,int train_test_predict);//there cannot be a case of invalid network and data without labels.
-
-    void test();//parameters not required now
-    //memory_optimization1
-    void testing_for_each_label(/*,int train_test_predict*/);
-    
-    void only_testing(nn_core_data_package_class* data_pack,int train_test_predict);
-
-    void predict_progress_bar();
-
-    void predict(nn_core_data_package_class* data_pack);
-
-    void make_prediction_on_user_entered_data();
-
-    void set_the_no_of_threads_required(int no_of_c_datapacks_after_big_datapack_handling=0,bool tried_before=false);
     string message;
     void print_message();
     void clrscr();
 
     public:
-
-    void start_core();//train_test_predict=1//train_test_predic is required for extra assurance
-
-    void add_data(nn_core_data_package_class* data_pack,int train_test_predict,float data_division1,string network_save_file_name);
+    void clear_core();//deletes all the data and network present inside the core. This function is not yet implemented.
     
+    vector<neuron> propagate(vector<float> input_attributes_value);//need to be implemented
+
+    void simplex_solver_data_entry_point(vector<nn_core_filtered_data> f_data_pack,int no_of_threads);
+
+    void save_core();
+    
+    network_structure_defination return_ns()
+    {   return ns;}
     string return_name()
     {   return core_name;}
-    core_class(int core_aim,int core_no,int parent_segment_aim,int parent_segment_no,string core_name);
+    string return_core_savefile_name()
+    {   return core_save_file_name;}
+    int return_core_no()
+    {   return core_no;}
+    int return_no_of_input_neuron()
+    {   return network1.input_neuron_size();}
+    int return_no_of_output_neuron()
+    {   return network1.output_neuron_size();}
+    datapack_structure_defination return_core_ds()
+    {   return ds;}
+
+    core_class(int core_aim,int core_no,int parent_segment_aim,int parent_segment_no,string core_name,datapack_structure_defination ds1);
 };

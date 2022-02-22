@@ -9,8 +9,8 @@ file modified of compability with shuttle_converted.csv
 #include<string.h>
 #include<algorithm>
 
-//#include"neural_network_core_data_package_class.h"
-#include"core_class.h"
+//#include"core_class.h"
+#include"segment_class.h"
 
 using namespace std;
 
@@ -146,7 +146,7 @@ void display_prepared_data(nn_core_data_package_class* data_pack)
     }
 }
 
-void core_starter(string &file_name_local,int &test_train_predict,float &data_division,string &network_save_file_name)
+void core_starter(string &file_name_local,int &test_train_predict,float &data_division,string &network_save_file_name,int &no_of_threads)
 {
     nn_core_data_package_class data_pack;
     file_name=file_name_local;
@@ -156,8 +156,8 @@ void core_starter(string &file_name_local,int &test_train_predict,float &data_di
         cout<<"data file reading success!!!\n";
     }
     //display_prepared_data(&data_pack);
-    core_class core1(0,0,0,0,"default_core");
-    cout<<"\nsize="<<data_pack.data.size();
-    core1.add_data(&data_pack,test_train_predict,data_division,network_save_file_name);
-    core1.start_core();
+    segment_class segment1(0,0,"default_segment");
+    //cout<<"\nsize="<<data_pack.data.size();
+    segment1.add_data(&data_pack,test_train_predict,data_division,network_save_file_name);
+    segment1.start_segment(no_of_threads);
 }

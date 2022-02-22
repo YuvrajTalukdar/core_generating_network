@@ -15,7 +15,7 @@ void clrscr()
     //system("clear");
 }
 
-bool menu(string &file_name,int &test_train_predict,float &data_division,string &network_save_file_name)
+bool menu(string &file_name,int &test_train_predict,float &data_division,string &network_save_file_name,int &no_of_threads)
 {
     //.csv file finder
     struct dirent *de;  // Pointer for directory entry
@@ -86,6 +86,8 @@ bool menu(string &file_name,int &test_train_predict,float &data_division,string 
         {   file_name=csv_save_file[file_choice-1];}
         //setting test_train_predict
         test_train_predict=0;//creates a brand new trained network
+        cout<<"\n\nSelect the no of threads: ";
+        cin>>no_of_threads;
     }
     else if(option1==2)
     {
@@ -126,6 +128,8 @@ bool menu(string &file_name,int &test_train_predict,float &data_division,string 
         cout<<"Enter data_division value: ";
         cin>>data_division;
         test_train_predict=1;
+        cout<<"\n\nSelect the no of threads: ";
+        cin>>no_of_threads;
     }
     else if(option1==3)
     {

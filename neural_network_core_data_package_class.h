@@ -5,7 +5,6 @@ using namespace std;
 
 class nn_core_data_package_class{  //raw input data used in the input_raw_to_prepared.cpp
     public:
-    string label_str;
     vector<vector<float>> data;  
     vector<int> labels; 
     bool analyze_status=false;
@@ -38,6 +37,5 @@ class nn_core_data_package_class{  //raw input data used in the input_raw_to_pre
 struct nn_core_filtered_data //its fot the filtered data used in the core class
 {
     vector<vector<float>> data;
-    string str;
     int label;
 };
