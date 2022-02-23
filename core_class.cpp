@@ -657,7 +657,7 @@ bool modified_simplex_solver::start_solver(converted_data_pack* cdp)
             st->slack_var.push_back(temp);
 
             st->z_col.push_back(0);
-            st->rhs.push_back(cdp->lower_firing_constrain_rhs); //modification needs to be done here
+            st->rhs.push_back(lower_firing_constrain_rhs); //modification needs to be done here
         }
         for(int a=0;a<cdp->not_firing_data.size();a++)
         {
@@ -682,7 +682,7 @@ bool modified_simplex_solver::start_solver(converted_data_pack* cdp)
             st->slack_var.push_back(temp);
 
             st->z_col.push_back(0);
-            st->rhs.push_back(cdp->upper_not_firing_constrain_rhs); //modification needs to be done here
+            st->rhs.push_back(upper_not_firing_constrain_rhs); //modification needs to be done here
         }
 
         st->z_row.clear();
@@ -947,9 +947,7 @@ void simplex_solver_data_preparation_class::cdp_spliter(vector<converted_data_pa
     cdp_temp1->corupt_pack=cdps[index]->corupt_pack;
     cdp_temp1->firing_label=cdps[index]->firing_label;
     cdp_temp1->firing_neuron_index=cdps[index]->firing_neuron_index;
-    cdp_temp1->lower_firing_constrain_rhs=cdps[index]->lower_firing_constrain_rhs;
     cdp_temp1->objective_function_coefficients=cdps[index]->objective_function_coefficients;
-    cdp_temp1->upper_not_firing_constrain_rhs=cdps[index]->upper_not_firing_constrain_rhs;
     cdp_temp1->weight_matrix=cdps[index]->weight_matrix;
         //second half
     for(a=cdps[index]->firing_data.size()/2;a<cdps[index]->firing_data.size();a++)
@@ -959,9 +957,7 @@ void simplex_solver_data_preparation_class::cdp_spliter(vector<converted_data_pa
     cdp_temp2->corupt_pack=cdps[index]->corupt_pack;
     cdp_temp2->firing_label=cdps[index]->firing_label;
     cdp_temp2->firing_neuron_index=cdps[index]->firing_neuron_index;
-    cdp_temp2->lower_firing_constrain_rhs=cdps[index]->lower_firing_constrain_rhs;
     cdp_temp2->objective_function_coefficients=cdps[index]->objective_function_coefficients;
-    cdp_temp2->upper_not_firing_constrain_rhs=cdps[index]->upper_not_firing_constrain_rhs;
     cdp_temp2->weight_matrix=cdps[index]->weight_matrix;
     //add data to cdp vec
     //cout<<"\n\norig:";

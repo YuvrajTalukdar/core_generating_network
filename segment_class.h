@@ -41,6 +41,8 @@ class segment_class{
 
     bool load_segment_if_available(int segment_aim,int segment_no,bool file_name_received,string file_name);
 
+    void set_lower_firing_constrain_rhs();
+
     void datapack_analyzer(nn_core_data_package_class* data_pack);//it fills up the datapack_structure_defination ds after analyzing the datapack. 
     struct shuffling_data{
         vector<float> temp_data;

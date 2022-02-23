@@ -195,7 +195,7 @@ class ann{
                         output_neurons[a].firing_point-=50;
                     }
                     //cout<<"\nsummation_temp1= "<<summation_temp;
-                    summation_temp=((atan(summation_temp)*180/3.1415)/90)*100;
+                    //summation_temp=((atan(summation_temp)*180/3.1415)/90)*100;
                     summation_vec.push_back(summation_temp);
                     //cout<<"\nsummation_temp2= "<<summation_temp;
                     summation=summation+summation_temp;

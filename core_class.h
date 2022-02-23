@@ -38,6 +38,8 @@ struct datapack_structure_defination{
     vector<float> elements;
 };
 
+static float lower_firing_constrain_rhs=92; //60,150
+static float upper_not_firing_constrain_rhs=10; //10
 struct converted_data_pack{
     vector<vector<float>> firing_data;
     vector<vector<float>> not_firing_data;
@@ -45,10 +47,6 @@ struct converted_data_pack{
     vector<float> weight_matrix;//ans stored here.
     int firing_neuron_index;
     float firing_label;
-    float lower_firing_constrain_rhs=60; //60
-
-    float upper_not_firing_constrain_rhs=10; //10
-
     bool corupt_pack=false;
 };
 
