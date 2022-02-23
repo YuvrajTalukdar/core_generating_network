@@ -130,6 +130,15 @@ int segment_class::propagate(vector<float> input)//will return the index of 1 fi
         attribute_end_index=attribute_end_index+core_vector[a]->return_no_of_input_neuron();
         output_neuron_from_each_core.push_back(core_vector[a]->propagate(trimed_input));
     }
+    /*cout<<"\n\n";
+    for(int a=0;a<output_neuron_from_each_core.size();a++)
+    {
+        cout<<"\n";
+        for(int b=0;b<output_neuron_from_each_core[a].size();b++)
+        {
+            cout<<"fp="<<output_neuron_from_each_core[a][b].firing_point<<" val="<<output_neuron_from_each_core[a][b].return_data();
+        }
+    }*/
     vector<neuron> output_neuron=combine_output_neurons(output_neuron_from_each_core);
     output_neuron_from_each_core.clear();
     int no_of_fired_neurons=0;
@@ -215,7 +224,7 @@ void segment_class::test()//finds the overall accuracy of the network
 
 void segment_class::testing_for_each_label()//finds the accuracy of each label
 {
-    filter(data_pack,0);//entire dataset will be stored in the f_train_data when train_test_predict=0
+    filter(&test_data,0);//entire dataset will be stored in the f_train_data when train_test_predict=0
     int correct_each_label[f_train_data.size()],total_each_label[f_train_data.size()];
     int correct=0,total=0;
     int fired_neuron_index;
@@ -226,18 +235,30 @@ void segment_class::testing_for_each_label()//finds the accuracy of each label
         for(int b=0;b<f_train_data[a].data.size();b++)
         {
             fired_neuron_index=propagate(f_train_data[a].data[b]);
+            /*cout<<"\nindex= "<<fired_neuron_index;
+            if(fired_neuron_index==0)
+            {   
+                cout<<"\n\ncheck1!!!!";
+                int gh;cin>>gh;
+            }*/
             if(fired_neuron_index==index_of_neuron_to_be_fired(f_train_data[a].label,ds.elements))
             {   correct_each_label[a]++;}
             total_each_label[a]++;
         }
-        correct+=total_each_label[a];
+        correct+=correct_each_label[a];
         total+=f_train_data[a].data.size();
     }
+    float avg_accuracy=0,accuracy;
     for(int a=0;a<f_train_data.size();a++)
     {
-        message="\nAccuracy for label "+to_string(f_train_data[a].label)+" = "+to_string((((float)correct_each_label[a])/((float)total_each_label[a]))*100)+"%"+" correct="+to_string(correct_each_label[a])+" total="+to_string(total_each_label[a]);
+        accuracy=(((float)correct_each_label[a])/((float)total_each_label[a]))*100;
+        message="\nAccuracy for label "+to_string(f_train_data[a].label)+" = "+to_string(accuracy)+"%"+" correct="+to_string(correct_each_label[a])+" total="+to_string(total_each_label[a]);
         print_message();
+        avg_accuracy+=accuracy;
     }
+    avg_accuracy=avg_accuracy/f_train_data.size();
+    message="\n\nAvg Accuracy= "+to_string(avg_accuracy)+"%"+" correct= "+to_string(correct)+" total= "+to_string(test_data.data.size());
+    print_message();
     message="\n\nTotal Accuracy= "+to_string((((float)correct)/((float)test_data.data.size()))*100)+"%"+" correct= "+to_string(correct)+" total= "+to_string(test_data.data.size());
     print_message();
 }
@@ -510,6 +531,29 @@ void segment_class::datapack_analyzer(nn_core_data_package_class* data_pack)
     }
 }
 
+void segment_class::set_lower_firing_constrain_rhs()
+{
+    float rhs,value1,value2,value3;
+    for(int a=0;a<f_train_data.size();a++)
+    {
+        value1=0;
+        for(int b=0;(b<f_train_data.at(a).data.size() && b<5);b++)
+        {
+            value2=0;
+            for(int c=0;c<f_train_data.at(a).data.at(b).size();c++)
+            {   value2+=f_train_data.at(a).data.at(b).at(c);}
+            value2=value2/f_train_data.at(a).data.at(b).size();
+            value1+=value2;
+        }
+        value1=value1/5;
+        value3+=value1;
+    }
+    value3=value3/f_train_data.size();
+    lower_firing_constrain_rhs=150;
+    cout<<"\n\nlower_firing_constrain_rhs= "<<lower_firing_constrain_rhs;
+    int gh;cin>>gh;
+}
+
 void segment_class::train(nn_core_data_package_class* data_pack,bool network_avail_status,int train_test_predict,int no_of_threads)
 {
     datapack_analyzer(data_pack);//function checked!
@@ -517,6 +561,7 @@ void segment_class::train(nn_core_data_package_class* data_pack,bool network_ava
     filter(data_pack,train_test_predict);//f_train_data pack gets created here.
     data_pack->data.clear();
     data_pack->labels.clear();
+    set_lower_firing_constrain_rhs();
     if(core_vector.size()==0)//this means core save file not found and fresh cores need to be created
     {   create_cores();}
     split_attributes_for_each_core();
@@ -558,7 +603,10 @@ void segment_class::train(nn_core_data_package_class* data_pack,bool network_ava
             core_vector[a]->save_core();
         }
         if(train_test_predict==1)
-        {   test();}
+        {   
+            //test();
+            testing_for_each_label();
+        }
     }
 }
 
