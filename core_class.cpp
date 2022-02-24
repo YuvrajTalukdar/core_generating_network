@@ -840,6 +840,12 @@ bool modified_simplex_solver::start_solver(converted_data_pack* cdp)
 bool modified_simplex_solver::cyclic_bug_present()
 {   return feasible_solution_calculator.cyclic_bug_present();}
 
+void modified_simplex_solver::set_training_settings(float lower_firing_constrain_rhs1,float upper_not_firing_constrain_rhs1)
+{
+    lower_firing_constrain_rhs=lower_firing_constrain_rhs1; //60,150
+    upper_not_firing_constrain_rhs=upper_not_firing_constrain_rhs1; //10
+}
+
 
 //simplex_solver_data_preparation_class
 void simplex_solver_data_preparation_class::cdp_viewer(converted_data_pack* cdp)
@@ -1106,6 +1112,7 @@ simplex_solver_data_preparation_class::simplex_solver_data_preparation_class(vec
 {
     network=network1;
     data_structure=ds;
+    lpp_solver1.set_training_settings(ds->lower_firing_constrain_rhs,ds->upper_not_firing_constrain_rhs);
     for(int a=0;a<cdps.size();a++)//memory_optimization7
     {   cdp.push_back(&cdps[a]);}
     //cdp=cdps;

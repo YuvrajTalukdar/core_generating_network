@@ -364,6 +364,8 @@ void segment_class::create_cores()
         datapack_structure_defination ds1;
         ds1.elements=ds.elements;
         ds1.no_of_labels=ds.no_of_labels;
+        ds1.lower_firing_constrain_rhs=ds.lower_firing_constrain_rhs;
+        ds1.upper_not_firing_constrain_rhs=ds.upper_not_firing_constrain_rhs;
         if(a!=no_of_cores_required-1)
         {   ds1.no_of_elements_in_each_record=no_of_attributes_per_core_balanced;}
         else
@@ -533,7 +535,7 @@ void segment_class::datapack_analyzer(nn_core_data_package_class* data_pack)
 
 void segment_class::set_lower_firing_constrain_rhs()
 {
-    float rhs,value1,value2,value3;
+    float value1=0,value2=0,value3=0;
     for(int a=0;a<f_train_data.size();a++)
     {
         value1=0;
@@ -541,7 +543,7 @@ void segment_class::set_lower_firing_constrain_rhs()
         {
             value2=0;
             for(int c=0;c<f_train_data.at(a).data.at(b).size();c++)
-            {   value2+=f_train_data.at(a).data.at(b).at(c);}
+            {   value2+=abs(f_train_data.at(a).data.at(b).at(c));}
             value2=value2/f_train_data.at(a).data.at(b).size();
             value1+=value2;
         }
@@ -549,8 +551,12 @@ void segment_class::set_lower_firing_constrain_rhs()
         value3+=value1;
     }
     value3=value3/f_train_data.size();
-    lower_firing_constrain_rhs=150;
-    cout<<"\n\nlower_firing_constrain_rhs= "<<lower_firing_constrain_rhs;
+    //lower_firing_constrain_rhs=150;
+    if(value3<10+30)
+    {   value3=60;}
+    ds.upper_not_firing_constrain_rhs=10;
+    ds.lower_firing_constrain_rhs=value3;//*(2.0/3.7);
+    cout<<"\n\nlower_firing_constrain_rhs= "<<ds.lower_firing_constrain_rhs;
     int gh;cin>>gh;
 }
 

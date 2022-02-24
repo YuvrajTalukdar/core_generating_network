@@ -36,10 +36,10 @@ struct datapack_structure_defination{
     int no_of_labels;
     int no_of_elements_in_each_record;
     vector<float> elements;
+    float lower_firing_constrain_rhs;//=92; //60,150
+    float upper_not_firing_constrain_rhs;//=10; //10
 };
 
-static float lower_firing_constrain_rhs=92; //60,150
-static float upper_not_firing_constrain_rhs=10; //10
 struct converted_data_pack{
     vector<vector<float>> firing_data;
     vector<vector<float>> not_firing_data;
@@ -104,6 +104,10 @@ static ratio_locker ratio_locker1;
 
 class modified_simplex_solver{
     private:
+    //training settings
+    float lower_firing_constrain_rhs; //60,150
+    float upper_not_firing_constrain_rhs; //10
+
     string message;
     struct id{
             bool slack=false,basic=false,z=false,rhs=false,theta=false;
@@ -176,6 +180,7 @@ class modified_simplex_solver{
     bool start_solver(converted_data_pack* cdp);
     bool cyclic_bug_present();
     converted_data_pack conflicting_data;
+    void set_training_settings(float lower_firing_constrain_rhs1,float upper_not_firing_constrain_rhs1);
 };
 
 class simplex_solver_data_preparation_class
