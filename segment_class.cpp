@@ -152,11 +152,17 @@ int segment_class::propagate(vector<float> input)//will return the index of 1 fi
     else if(no_of_fired_neurons==0)
     {   checker_nf(output_neuron);}
     int fired_neuron_index,fired_neuron_label;
+    int count=0;
     for(int a=0;a<output_neuron.size();a++)
     {
         if(output_neuron[a].return_fire_status())
-        {   fired_neuron_index=a;break;}
+        {   fired_neuron_index=a;count++;}
     }
+    if(count==0)//no fire
+    {   fired_neuron_index=-1;}
+    else if(count>1)//double fire
+    {   fired_neuron_index=-2;}
+
     return fired_neuron_index;
 }
 
@@ -228,6 +234,7 @@ void segment_class::testing_for_each_label()//finds the accuracy of each label
     int correct_each_label[f_train_data.size()],total_each_label[f_train_data.size()];
     int correct=0,total=0;
     int fired_neuron_index;
+    int df[f_train_data.size()]={0},nf[f_train_data.size()]={0};
     for(int a=0;a<f_train_data.size();a++)
     {
         correct_each_label[a]=0;
@@ -235,14 +242,12 @@ void segment_class::testing_for_each_label()//finds the accuracy of each label
         for(int b=0;b<f_train_data[a].data.size();b++)
         {
             fired_neuron_index=propagate(f_train_data[a].data[b]);
-            /*cout<<"\nindex= "<<fired_neuron_index;
-            if(fired_neuron_index==0)
-            {   
-                cout<<"\n\ncheck1!!!!";
-                int gh;cin>>gh;
-            }*/
             if(fired_neuron_index==index_of_neuron_to_be_fired(f_train_data[a].label,ds.elements))
             {   correct_each_label[a]++;}
+            else if(fired_neuron_index==-1)
+            {   nf[a]++;}
+            else if(fired_neuron_index==-2)
+            {   df[a]++;}
             total_each_label[a]++;
         }
         correct+=correct_each_label[a];
@@ -252,7 +257,7 @@ void segment_class::testing_for_each_label()//finds the accuracy of each label
     for(int a=0;a<f_train_data.size();a++)
     {
         accuracy=(((float)correct_each_label[a])/((float)total_each_label[a]))*100;
-        message="\nAccuracy for label "+to_string(f_train_data[a].label)+" = "+to_string(accuracy)+"%"+" correct="+to_string(correct_each_label[a])+" total="+to_string(total_each_label[a]);
+        message="\nAccuracy for label "+to_string(f_train_data[a].label)+" = "+to_string(accuracy)+"%"+" correct="+to_string(correct_each_label[a])+" total="+to_string(total_each_label[a])+" df="+to_string(df[a])+" nf="+to_string(nf[a]);
         print_message();
         avg_accuracy+=accuracy;
     }
@@ -555,7 +560,7 @@ void segment_class::set_lower_firing_constrain_rhs()
     if(value3<10+30)
     {   value3=60;}
     ds.upper_not_firing_constrain_rhs=10;
-    ds.lower_firing_constrain_rhs=value3;//*(2.0/3.7);
+    ds.lower_firing_constrain_rhs=50;//*(2.0/3.7);//65
     cout<<"\n\nlower_firing_constrain_rhs= "<<ds.lower_firing_constrain_rhs;
     int gh;cin>>gh;
 }

@@ -116,27 +116,36 @@ class ann{
     void create_new_path(vector<float> weight_matrix,int output_id)
     {
         //pthread_mutex_lock(&lock);
-        
-        path_struct new_path;
-        int id=path.size();
-        if(id==0)
-        {   new_path.path_id=0;}
-        else
-        {
-            id=path[id-1].path_id;
-            id++;
-            new_path.path_id=id;
-        }
-        //input neuron ids are not required but still included for would be future requeriments
-        for(int a=0;a<input_neurons.size();a++)
-        {new_path.input_neuron_id.push_back(input_neurons[a].get_id());}
-        new_path.output_neuron_id=output_id;
-        new_path.weight_matrix.clear();
+        int zero_count=0,extreame_value=0;
         for(int a=0;a<weight_matrix.size();a++)
-        {   new_path.weight_matrix.push_back(weight_matrix[a]);}
+        {
+            if(weight_matrix[a]==0)
+            {   zero_count++;}
+            if(abs(weight_matrix[a]>1000))
+            {   extreame_value++;}
+        }
+        if(zero_count<weight_matrix.size()/2&& extreame_value<2)
+        {   
+            path_struct new_path;
+            int id=path.size();
+            if(id==0)
+            {   new_path.path_id=0;}
+            else
+            {
+                id=path[id-1].path_id;
+                id++;
+                new_path.path_id=id;
+            }
+            //input neuron ids are not required but still included for would be future requeriments
+            for(int a=0;a<input_neurons.size();a++)
+            {new_path.input_neuron_id.push_back(input_neurons[a].get_id());}
+            new_path.output_neuron_id=output_id;
+            new_path.weight_matrix.clear();
+            for(int a=0;a<weight_matrix.size();a++)
+            {   new_path.weight_matrix.push_back(weight_matrix[a]);}
 
-        path.push_back(new_path);
-        
+            path.push_back(new_path);
+        }
         //pthread_mutex_unlock(&lock);
     }
 
@@ -178,32 +187,32 @@ class ann{
                 float summation_temp=0;
                 if(path[c].output_neuron_id==a)
                 {
-                    output_neurons[a].firing_point+=50;
+                    output_neurons[a].firing_point+=40;//50,40
                     for(int d=0;d<path[c].weight_matrix.size();d++)//weight matrix size = input neuron size
                     {
                         summation_temp=summation_temp+input_neurons[d].return_data()*path[c].weight_matrix[d]; //need to be modified...................................
                         //cout<<"i= "<<input_neurons[d].return_data()<<" w= "<<path[c].weight_matrix[d]<<endl;
                     }
-                    if(summation_temp>500 || summation_temp<-500)//1000
+                    if(summation_temp>5000 || summation_temp<-5000)//500
                     {
                         summation_temp=0;
-                        output_neurons[a].firing_point-=50;
+                        output_neurons[a].firing_point-=40;//50,40
                     }
                     else if(summation_temp>0&&summation_temp<40)
                     {
                         summation_temp=0;
-                        output_neurons[a].firing_point-=50;
+                        output_neurons[a].firing_point-=40;//50,40
                     }
                     //cout<<"\nsummation_temp1= "<<summation_temp;
-                    //summation_temp=((atan(summation_temp)*180/3.1415)/90)*100;
+                    summation_temp=((atan(summation_temp)*180/3.1415)/90)*100;
                     summation_vec.push_back(summation_temp);
                     //cout<<"\nsummation_temp2= "<<summation_temp;
                     summation=summation+summation_temp;
                 }
             }
-            if(summation-output_neurons[a].firing_point>100000)
+            if(summation-output_neurons[a].firing_point>100000)//100000
             {   summation=0;}
-            if(summation>=100000)
+            if(summation>=100000)//100000
             {   summation=0;}
             //cout<<"\nsummation= "<<summation<<" label_neuron_to_be_fired_id= "<<label_neuron_to_be_fired_id<<"a= "<<a;
             //cout<<" firing_point= "<<firing_point;
