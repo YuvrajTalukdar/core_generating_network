@@ -560,7 +560,7 @@ void segment_class::set_lower_firing_constrain_rhs()
     if(value3<10+30)
     {   value3=60;}
     ds.upper_not_firing_constrain_rhs=10;
-    ds.lower_firing_constrain_rhs=45;//*(2.0/3.7);//65
+    ds.lower_firing_constrain_rhs=value3;//*(2.0/3.7);//65
     cout<<"\n\nlower_firing_constrain_rhs= "<<ds.lower_firing_constrain_rhs;
     int gh;cin>>gh;
 }
