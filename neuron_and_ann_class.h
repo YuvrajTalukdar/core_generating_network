@@ -124,7 +124,7 @@ class ann{
             if(abs(weight_matrix[a]>1000))
             {   extreame_value++;}
         }
-        if(zero_count<weight_matrix.size()/2&& extreame_value<2)
+        if(zero_count<weight_matrix.size()/2/*&& extreame_value<2*/)
         {   
             path_struct new_path;
             int id=path.size();
