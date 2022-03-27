@@ -222,6 +222,8 @@ struct network_structure_defination{
 class core_class
 {
     private:
+    //training data pointers
+    vector<nn_core_filtered_data>* f_data_pack;
     //core identification information
     int core_no=0,core_aim=0;//this two must be changed using a function so that proper core is loaded
     int parent_segment_aim=0,parent_segment_no=0;
@@ -233,7 +235,7 @@ class core_class
     int predict_progress_bar_denominator=0;//for the predict progress bar
     //training information
     ann network1;
-    //simplex_solver_data_preparation_class lpp_solver;
+    int* no_of_threads;
     datapack_structure_defination ds;//for the data which will be processed by this particular core
     network_structure_defination ns;
 
@@ -267,7 +269,9 @@ class core_class
     
     vector<neuron> propagate(vector<float> input_attributes_value);//need to be implemented
 
-    void simplex_solver_data_entry_point(vector<nn_core_filtered_data> f_data_pack,int no_of_threads);
+    void load_training_data_into_core(vector<nn_core_filtered_data>& f_data_pack1,int& no_of_threads1);
+
+    void train_core();//earlier called simplex_solver_data_entry_point
 
     void save_core();
     

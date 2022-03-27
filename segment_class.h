@@ -1,11 +1,12 @@
 /*
 core class handles natural cores
 */
-
+#include<chrono>
 #include"neuron_and_ann_class.h"
 #include"core_class.h"
 
 using namespace std;
+using namespace std::chrono;
 
 class segment_class{
     private:
@@ -21,7 +22,7 @@ class segment_class{
     string network_save_file_name;
     bool id_lock=false;
     int required_no_of_threads;
-    int no_of_attributes_per_core_default=8;//25
+    int no_of_attributes_per_core_default=25;//25
     int min_no_of_attributes_per_core=4;
     int extra_attributes_in_last_core=0;
     int no_of_attributes_per_core_balanced;//last core may have few extra attributes.

@@ -2,6 +2,7 @@
 #include<string.h>
 #include<dirent.h>
 #include<vector>
+#include<thread>
 #include<iomanip>//for erasing the above line
 #include<sys/ioctl.h>//for the terminal size
 
@@ -86,8 +87,16 @@ bool menu(string &file_name,int &test_train_predict,float &data_division,string 
         {   file_name=csv_save_file[file_choice-1];}
         //setting test_train_predict
         test_train_predict=0;//creates a brand new trained network
-        cout<<"\n\nSelect the no of threads: ";
-        cin>>no_of_threads;
+        char thread_option;
+        point9:
+        cout<<"\n\nEnable multi threading(y/n): ";
+        cin>>thread_option;
+        if(thread_option=='y'||thread_option=='Y')
+        {   no_of_threads=thread::hardware_concurrency();}
+        else if(thread_option=='n'||thread_option=='N')
+        {   no_of_threads=1;}
+        else
+        {   cout<<"Wrong Option!!";goto point9;}
     }
     else if(option1==2)
     {
@@ -128,8 +137,16 @@ bool menu(string &file_name,int &test_train_predict,float &data_division,string 
         cout<<"Enter data_division value: ";
         cin>>data_division;
         test_train_predict=1;
-        cout<<"\n\nSelect the no of threads: ";
-        cin>>no_of_threads;
+        char thread_option;
+        point10:
+        cout<<"\n\nEnable multi threading(y/n): ";
+        cin>>thread_option;
+        if(thread_option=='y'||thread_option=='Y')
+        {   no_of_threads=thread::hardware_concurrency();}
+        else if(thread_option=='n'||thread_option=='N')
+        {   no_of_threads=1;}
+        else
+        {   cout<<"Wrong Option!!";goto point10;}
     }
     else if(option1==3)
     {

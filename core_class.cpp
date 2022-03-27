@@ -1624,43 +1624,49 @@ void core_class::big_c_datapack_handler(vector<converted_data_pack> &cdp)//passi
     print_message();
 }
 
-void core_class::simplex_solver_data_entry_point(vector<nn_core_filtered_data> f_data_pack,int no_of_threads)
+void core_class::load_training_data_into_core(vector<nn_core_filtered_data>& f_data_pack1,int& no_of_threads1)
+{
+    no_of_threads=&no_of_threads1;
+    f_data_pack=&f_data_pack1;
+}
+
+void core_class::train_core()
 {
     vector<converted_data_pack> c_datapacks;
     converted_data_pack c_datapack;
     //ratio maintance and packing data in c_datapacks.
     int sum_total_training_data=0;
-    for(int a=0;a<f_data_pack.size();a++)
-    {   sum_total_training_data=sum_total_training_data+f_data_pack[a].data.size();}
+    for(int a=0;a<f_data_pack->size();a++)
+    {   sum_total_training_data=sum_total_training_data+f_data_pack->at(a).data.size();}
     message.clear();
     message="\nsize of training data set= "+to_string(sum_total_training_data)+"\n";
     print_message();
     c_datapacks.clear(); //for asured cleaniness
-    for(int a=0;a<f_data_pack.size();a++)
+    for(int a=0;a<f_data_pack->size();a++)
     {
         message.clear();
-        message="packing data for label= "+to_string(f_data_pack[a].label)+"\n";
+        message="packing data for label= "+to_string(f_data_pack->at(a).label)+"\n";
         print_message();
         //determining the c_data_pack critical info
-        int sum_total_not_firing_data=sum_total_training_data-f_data_pack[a].data.size();
+        int sum_total_not_firing_data=sum_total_training_data-f_data_pack->at(a).data.size();
         int no_of_c_data_packs_needed=0,no_of_not_firing_data_in_each_pack=0,no_of_firing_data_in_each_pack=0;
         int additional_firing_data_in_the_last_datapack=0,additional_not_firing_data_in_the_last_datapack=0;
-        if(sum_total_not_firing_data>=f_data_pack[a].data.size())//for not firing data > firing data
+        if(sum_total_not_firing_data>=f_data_pack->at(a).data.size())//for not firing data > firing data
         {
-            while(sum_total_not_firing_data>=f_data_pack[a].data.size())
+            while(sum_total_not_firing_data>=f_data_pack->at(a).data.size())
             {
                 //cout<<"\ncheck4="<<f_data_pack[a].data.size()<<" "<<sum_total_not_firing_data;
-                sum_total_not_firing_data=sum_total_not_firing_data-f_data_pack[a].data.size();//cout<<"check2";
+                sum_total_not_firing_data=sum_total_not_firing_data-f_data_pack->at(a).data.size();//cout<<"check2";
                 no_of_c_data_packs_needed++;
             }
             int rem1=sum_total_not_firing_data;
-            no_of_firing_data_in_each_pack=f_data_pack[a].data.size();
-            no_of_not_firing_data_in_each_pack=f_data_pack[a].data.size()+rem1/no_of_c_data_packs_needed;
+            no_of_firing_data_in_each_pack=f_data_pack->at(a).data.size();
+            no_of_not_firing_data_in_each_pack=f_data_pack->at(a).data.size()+rem1/no_of_c_data_packs_needed;
             additional_not_firing_data_in_the_last_datapack=rem1%no_of_c_data_packs_needed;
         }
-        else if(sum_total_not_firing_data<f_data_pack[a].data.size()) //for firing data more than not firing data
+        else if(sum_total_not_firing_data<f_data_pack->at(a).data.size()) //for firing data more than not firing data
         {
-            int sum_total_firing_data=f_data_pack[a].data.size();
+            int sum_total_firing_data=f_data_pack->at(a).data.size();
             while(sum_total_firing_data>=sum_total_not_firing_data)
             {
                 sum_total_firing_data=sum_total_firing_data-sum_total_not_firing_data;//cout<<"check3";
@@ -1673,19 +1679,19 @@ void core_class::simplex_solver_data_entry_point(vector<nn_core_filtered_data> f
         }
         
         //packaging the data
-        if(no_of_firing_data_in_each_pack==f_data_pack[a].data.size())//this means firing data < not firing data
+        if(no_of_firing_data_in_each_pack==f_data_pack->at(a).data.size())//this means firing data < not firing data
         {
             int no_of_packages_created=0;
             int initial_value=0,final_value=0;
             vector<vector<float>> not_firing_data_temp;
             not_firing_data_temp.clear();
             //copying all the not firing data in not_firing_data_temp
-            for(int b=0;b<f_data_pack.size();b++)
+            for(int b=0;b<f_data_pack->size();b++)
             {
                 if(b!=a)
                 {
-                    for(int c=0;c<f_data_pack[b].data.size();c++)
-                    {   not_firing_data_temp.push_back(f_data_pack[b].data[c]);}
+                    for(int c=0;c<f_data_pack->at(b).data.size();c++)
+                    {   not_firing_data_temp.push_back(f_data_pack->at(b).data[c]);}
                 }
             }
             while(no_of_packages_created!=no_of_c_data_packs_needed)
@@ -1696,8 +1702,8 @@ void core_class::simplex_solver_data_entry_point(vector<nn_core_filtered_data> f
                 c_datapack.objective_function_coefficients.clear();
                 c_datapack.weight_matrix.clear();
                 //packing the firing data
-                for(int b=0;b<f_data_pack[a].data.size();b++)
-                {   c_datapack.firing_data.push_back(f_data_pack[a].data[b]);}
+                for(int b=0;b<f_data_pack->at(a).data.size();b++)
+                {   c_datapack.firing_data.push_back(f_data_pack->at(a).data[b]);}
                 //packing not firing data
                 initial_value=final_value;
                 final_value=final_value+no_of_not_firing_data_in_each_pack;
@@ -1711,7 +1717,7 @@ void core_class::simplex_solver_data_entry_point(vector<nn_core_filtered_data> f
                     c_datapack.not_firing_data.push_back(not_firing_data_temp[b]);
                 }
                 //setting up the label and output neuron index
-                c_datapack.firing_label=f_data_pack[a].label;
+                c_datapack.firing_label=f_data_pack->at(a).label;
                 c_datapack.firing_neuron_index=a;
                 //setting up the objective function coefficient 
                 for(int b=0;b<c_datapack.firing_data[0].size();b++)
@@ -1744,19 +1750,19 @@ void core_class::simplex_solver_data_entry_point(vector<nn_core_filtered_data> f
                 {   final_value=final_value+additional_firing_data_in_the_last_datapack;}
                 for(int b=initial_value;b<final_value;b++)
                 {
-                    c_datapack.firing_data.push_back(f_data_pack[a].data[b]);
+                    c_datapack.firing_data.push_back(f_data_pack->at(a).data[b]);
                 }
                 //packing the not firing data
-                for(int b=0;b<f_data_pack.size();b++)
+                for(int b=0;b<f_data_pack->size();b++)
                 {
                     if(b!=a)
                     {
-                        for(int c=0;c<f_data_pack[b].data.size();c++)
-                        {   c_datapack.not_firing_data.push_back(f_data_pack[b].data[c]);}
+                        for(int c=0;c<f_data_pack->at(b).data.size();c++)
+                        {   c_datapack.not_firing_data.push_back(f_data_pack->at(b).data[c]);}
                     }
                 }
                 //setting up the label and output neuron index
-                c_datapack.firing_label=f_data_pack[a].label;
+                c_datapack.firing_label=f_data_pack->at(a).label;
                 c_datapack.firing_neuron_index=a;
                 //setting up the objective function coefficient
                 for(int b=0;b<c_datapack.firing_data[0].size();b++)
@@ -1772,7 +1778,7 @@ void core_class::simplex_solver_data_entry_point(vector<nn_core_filtered_data> f
             }
         }
     }
-    f_data_pack.clear();//memory_optimization3
+    f_data_pack->clear();//memory_optimization3
     message.clear();
     message="finished packaging data in c_datapacks.";
     print_message();
@@ -1784,19 +1790,18 @@ void core_class::simplex_solver_data_entry_point(vector<nn_core_filtered_data> f
     message="\ntotal no of c_data_packs after big c_datapacks handling= "+to_string(c_datapacks.size());
     print_message();
     //this is the place for parallelization process.
-    //int required_no_of_threads;//=sysconf(_SC_NPROCESSORS_ONLN);//no of threads
     vector<vector<converted_data_pack>> c_datapacks_vector;
     message.clear();
-    message="\narranging c_datapacks for "+to_string(no_of_threads)+" threads..........";
+    message="\narranging c_datapacks for "+to_string(*no_of_threads)+" threads..........";
     print_message();
-    c_data_packs_division_for_multi_threading(c_datapacks_vector,c_datapacks,no_of_threads);
+    c_data_packs_division_for_multi_threading(c_datapacks_vector,c_datapacks,*no_of_threads);
     point1:
-    if(no_of_threads!=c_datapacks_vector.size())
+    if(*no_of_threads!=c_datapacks_vector.size())
     {
         message.clear();
-        message="\n\nERROR!!! failed to set a valid number of threads. Setting the no_of_threads to "+to_string(c_datapacks_vector.size());
+        message="\nSetting the no_of_threads to "+to_string(c_datapacks_vector.size());
         print_message();
-        no_of_threads=c_datapacks_vector.size();
+        *no_of_threads=c_datapacks_vector.size();
     }
     //memory_optimization4 : turn  vector<simplex_solver_data_preparation_class> to  vector<simplex_solver_data_preparation_class*>       
     vector<simplex_solver_data_preparation_class*> lpp_solver_vec;
@@ -1805,24 +1810,18 @@ void core_class::simplex_solver_data_entry_point(vector<nn_core_filtered_data> f
         simplex_solver_data_preparation_class *lpp_solver=new simplex_solver_data_preparation_class(c_datapacks_vector[a],&ds,&network1);//initializing the obj of the class   
         lpp_solver_vec.push_back(lpp_solver);
     }
-    vector<thread*> thread_vec(no_of_threads);
+    vector<thread*> thread_vec(*no_of_threads);
     //thread* progress_diaplay_thread;
     message.clear();
     message=" lpp_solver_vec size="+to_string(lpp_solver_vec.size());
     print_message();
-    //cin.ignore(1024, '\n');
-    message.clear();
-    message="\n\nPress enter to continue...";
-    print_message();
-    //cin.get();//pause
-    time_t begin=time(0);
     //lpp solvers will start now.........
-    for(int a=0;a<no_of_threads;a++)
+    for(int a=0;a<*no_of_threads;a++)
     {   thread_vec[a]=new thread(&simplex_solver_data_preparation_class::lp_solver,lpp_solver_vec[a]);}
     //int progress_bar_error;
     //if(pds==true)
     //{   progress_diaplay_thread=new thread(&core_class::display_training_progress,this);}
-    for(int a=0;a<no_of_threads;a++)
+    for(int a=0;a<*no_of_threads;a++)
     {   thread_vec[a]->join();}
     //memory_optimization6 : next three lines
     for(int a=0;a<lpp_solver_vec.size();a++)
@@ -1831,10 +1830,6 @@ void core_class::simplex_solver_data_entry_point(vector<nn_core_filtered_data> f
     thread_vec.clear();
     //if(pds==true)
     //{   progress_diaplay_thread->join();}
-    time_t end=time(0);
-    message.clear();
-    message="\ntime taken for training: "+to_string(end-begin);
-    print_message();
 }
 
 void core_class::display_training_progress()

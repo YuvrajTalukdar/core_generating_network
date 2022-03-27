@@ -124,7 +124,7 @@ class ann{
             if(abs(weight_matrix[a]>1000))
             {   extreame_value++;}
         }
-        if(zero_count<weight_matrix.size()/2/*&& extreame_value<2*/)
+        if(zero_count<weight_matrix.size()/2&& extreame_value<2)
         {   
             path_struct new_path;
             int id=path.size();
@@ -193,7 +193,7 @@ class ann{
                         summation_temp=summation_temp+input_neurons[d].return_data()*path[c].weight_matrix[d]; //need to be modified...................................
                         //cout<<"i= "<<input_neurons[d].return_data()<<" w= "<<path[c].weight_matrix[d]<<endl;
                     }
-                    if(summation_temp>3000 || summation_temp<-3000)//500
+                    if(summation_temp>2000 || summation_temp<-2000)//500
                     {
                         summation_temp=0;
                         output_neurons[a].firing_point-=40;//50,40

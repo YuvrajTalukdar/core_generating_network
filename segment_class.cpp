@@ -559,7 +559,7 @@ void segment_class::set_lower_firing_constrain_rhs()
     //lower_firing_constrain_rhs=150;
     if(value3<10+30)
     {   value3=60;}
-    ds.upper_not_firing_constrain_rhs=10;
+    ds.upper_not_firing_constrain_rhs=10;//10
     ds.lower_firing_constrain_rhs=value3;//*(2.0/3.7);//65
     cout<<"\n\nlower_firing_constrain_rhs= "<<ds.lower_firing_constrain_rhs;
     int gh;cin>>gh;
@@ -607,17 +607,40 @@ void segment_class::train(nn_core_data_package_class* data_pack,bool network_ava
         message.clear();
         message="\nnetwork saved";
         print_message();
+        auto start = high_resolution_clock::now();
         //training by threading can be done here in future
-        for(int a=0;a<core_vector.size();a++)
+        if(no_of_threads==1)
         {
-            core_vector[a]->simplex_solver_data_entry_point(f_train_data_split[a],no_of_threads);
-            core_vector[a]->save_core();
+            for(int a=0;a<core_vector.size();a++)
+            {
+                core_vector[a]->load_training_data_into_core(f_train_data_split[a],no_of_threads);
+                core_vector[a]->train_core();
+                core_vector[a]->save_core();
+            }
+        }
+        else
+        {
+            vector<thread*> thread_vec(core_vector.size());
+            for(int a=0;a<thread_vec.size();a++)
+            {
+                core_vector[a]->load_training_data_into_core(f_train_data_split[a],no_of_threads);
+                thread_vec[a]=new thread(&core_class::train_core,core_vector[a]);
+            }
+            for(int a=0;a<thread_vec.size();a++)
+            {   thread_vec[a]->join();}
+            for(int a=0;a<core_vector.size();a++)
+            {   core_vector[a]->save_core();}
         }
         if(train_test_predict==1)
         {   
             //test();
             testing_for_each_label();
         }
+        auto end = high_resolution_clock::now();
+        auto duration = duration_cast<microseconds>(end - start);
+        message.clear();
+        message="\n\nTime Taken= "+to_string(duration.count()/pow(10,6))+"\n\n";
+        print_message();
     }
 }
 
