@@ -1103,9 +1103,12 @@ void simplex_solver_data_preparation_class::lp_solver()
 
 void simplex_solver_data_preparation_class::print_message()
 {
-    pthread_mutex_lock(&lock_1);
-    cout<<message;
-    pthread_mutex_unlock(&lock_1);
+    if(display_core_events)
+    {
+        pthread_mutex_lock(&lock_1);
+        cout<<message;
+        pthread_mutex_unlock(&lock_1);
+    }
 }
 
 simplex_solver_data_preparation_class::simplex_solver_data_preparation_class(vector<converted_data_pack> &cdps,datapack_structure_defination* ds,ann* network1)
@@ -1930,10 +1933,12 @@ void core_class::network_structure_modifier()
 
 void core_class::print_message()
 {
-    pthread_mutex_lock(&lock_1);
-    cout<<message;
-    //cout<<"\ncore_no= "<<core_no<<"core_name="<<core_name<<" started...";
-    pthread_mutex_unlock(&lock_1);
+    if(display_core_events)
+    {
+        pthread_mutex_lock(&lock_1);
+        cout<<message;
+        pthread_mutex_unlock(&lock_1);
+    }
 }
 
 core_class::core_class(int core_aim1,int core_no1,int parent_segment_aim1,int parent_segment_no1,string core_name1,datapack_structure_defination ds1)
@@ -1941,7 +1946,7 @@ core_class::core_class(int core_aim1,int core_no1,int parent_segment_aim1,int pa
     if(id_lock==false)
     {
         core_aim=core_aim1;
-        core_no=core_no;
+        core_no=core_no1;
         parent_segment_aim=parent_segment_aim1;
         parent_segment_no=parent_segment_no1;
         core_name=core_name1;

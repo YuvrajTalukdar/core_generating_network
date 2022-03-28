@@ -186,6 +186,7 @@ class modified_simplex_solver{
 class simplex_solver_data_preparation_class
 {
     private:
+    bool display_core_events=false;
     string message;
     struct conflicting_data_buffer_vector_struct
     {
@@ -222,6 +223,7 @@ struct network_structure_defination{
 class core_class
 {
     private:
+    bool display_core_events=false;
     //training data pointers
     vector<nn_core_filtered_data>* f_data_pack;
     //core identification information
@@ -231,8 +233,8 @@ class core_class
     string core_save_file_name="NULL";//provided if core is loaded from a core/network savefile. Not set using constructor
     bool id_lock=false;
     //progress bar data
-    int predict_progress_bar_numerator=0;//for the predict progress bar
-    int predict_progress_bar_denominator=0;//for the predict progress bar
+    //int predict_progress_bar_numerator=0;//for the predict progress bar
+    //int predict_progress_bar_denominator=0;//for the predict progress bar
     //training information
     ann network1;
     int* no_of_threads;

@@ -613,9 +613,15 @@ void segment_class::train(nn_core_data_package_class* data_pack,bool network_ava
         {
             for(int a=0;a<core_vector.size();a++)
             {
+                message.clear();
+                message="\nTraining Core "+to_string(core_vector[a]->return_core_no());
+                print_message();
                 core_vector[a]->load_training_data_into_core(f_train_data_split[a],no_of_threads);
                 core_vector[a]->train_core();
                 core_vector[a]->save_core();
+                message.clear();
+                message="\nCore "+to_string(core_vector[a]->return_core_no())+" training complete.";
+                print_message();
             }
         }
         else
@@ -623,11 +629,19 @@ void segment_class::train(nn_core_data_package_class* data_pack,bool network_ava
             vector<thread*> thread_vec(core_vector.size());
             for(int a=0;a<thread_vec.size();a++)
             {
+                message.clear();
+                message="\nTraining Core "+to_string(core_vector[a]->return_core_no());
+                print_message();
                 core_vector[a]->load_training_data_into_core(f_train_data_split[a],no_of_threads);
                 thread_vec[a]=new thread(&core_class::train_core,core_vector[a]);
             }
             for(int a=0;a<thread_vec.size();a++)
-            {   thread_vec[a]->join();}
+            {   
+                thread_vec[a]->join();
+                message.clear();
+                message="\nCore "+to_string(core_vector[a]->return_core_no())+" training complete.";
+                print_message();
+            }
             for(int a=0;a<core_vector.size();a++)
             {   core_vector[a]->save_core();}
         }
