@@ -292,5 +292,7 @@ class core_class
     datapack_structure_defination return_core_ds()
     {   return ds;}
 
-    core_class(int core_aim,int core_no,int parent_segment_aim,int parent_segment_no,string core_name,datapack_structure_defination ds1);
+    void set_critical_variable(chromosome critical_variable);
+
+    core_class(int core_aim,int core_no,int parent_segment_aim,int parent_segment_no,string core_name,datapack_structure_defination& ds1);
 };

@@ -228,21 +228,37 @@ void segment_class::test()//finds the overall accuracy of the network
     int gh;cin>>gh;
 }
 
-void segment_class::testing_for_each_label()//finds the accuracy of each label
+float segment_class::testing_for_each_label()//finds the accuracy of each label
 {
-    filter(&test_data,0);//entire dataset will be stored in the f_train_data when train_test_predict=0
-    int correct_each_label[f_train_data.size()],total_each_label[f_train_data.size()];
+    //filter(&test_data,0);//entire dataset will be stored in the f_train_data when train_test_predict=0
+    nn_core_filtered_data f_data;
+    vector<nn_core_filtered_data> f_test_data_vector;
+    for(int a=0;a<ds.elements.size();a++)
+    {
+        f_data.data.clear();
+        for(int b=0;b<test_data.labels.size();b++)
+        {
+            if(ds.elements[a]==test_data.labels[b])
+            {
+                f_data.data.push_back(test_data.data[b]);
+                f_data.label=test_data.labels[b];
+            }
+        }
+        f_test_data_vector.push_back(f_data);
+    }
+    
+    int correct_each_label[f_test_data_vector.size()],total_each_label[f_test_data_vector.size()];
     int correct=0,total=0;
     int fired_neuron_index;
-    int df[f_train_data.size()]={0},nf[f_train_data.size()]={0};
-    for(int a=0;a<f_train_data.size();a++)
+    int df[f_test_data_vector.size()]={0},nf[f_test_data_vector.size()]={0};
+    for(int a=0;a<f_test_data_vector.size();a++)
     {
         correct_each_label[a]=0;
         total_each_label[a]=0;
-        for(int b=0;b<f_train_data[a].data.size();b++)
+        for(int b=0;b<f_test_data_vector[a].data.size();b++)
         {
-            fired_neuron_index=propagate(f_train_data[a].data[b]);
-            if(fired_neuron_index==index_of_neuron_to_be_fired(f_train_data[a].label,ds.elements))
+            fired_neuron_index=propagate(f_test_data_vector[a].data[b]);
+            if(fired_neuron_index==index_of_neuron_to_be_fired(f_test_data_vector[a].label,ds.elements))
             {   correct_each_label[a]++;}
             else if(fired_neuron_index==-1)
             {   nf[a]++;}
@@ -251,21 +267,28 @@ void segment_class::testing_for_each_label()//finds the accuracy of each label
             total_each_label[a]++;
         }
         correct+=correct_each_label[a];
-        total+=f_train_data[a].data.size();
+        total+=f_test_data_vector[a].data.size();
     }
     float avg_accuracy=0,accuracy;
-    for(int a=0;a<f_train_data.size();a++)
+    for(int a=0;a<f_test_data_vector.size();a++)
     {
         accuracy=(((float)correct_each_label[a])/((float)total_each_label[a]))*100;
-        message="\nAccuracy for label "+to_string(f_train_data[a].label)+" = "+to_string(accuracy)+"%"+" correct="+to_string(correct_each_label[a])+" total="+to_string(total_each_label[a])+" df="+to_string(df[a])+" nf="+to_string(nf[a]);
-        print_message();
+        if(critical_variables_set)
+        {
+            message="\nAccuracy for label "+to_string(f_test_data_vector[a].label)+" = "+to_string(accuracy)+"%"+" correct="+to_string(correct_each_label[a])+" total="+to_string(total_each_label[a])+" df="+to_string(df[a])+" nf="+to_string(nf[a]);
+            print_message();
+        }
         avg_accuracy+=accuracy;
     }
-    avg_accuracy=avg_accuracy/f_train_data.size();
-    message="\n\nAvg Accuracy= "+to_string(avg_accuracy)+"%"+" correct= "+to_string(correct)+" total= "+to_string(test_data.data.size());
-    print_message();
-    message="\n\nTotal Accuracy= "+to_string((((float)correct)/((float)test_data.data.size()))*100)+"%"+" correct= "+to_string(correct)+" total= "+to_string(test_data.data.size());
-    print_message();
+    avg_accuracy=avg_accuracy/f_test_data_vector.size();
+    if(critical_variables_set)
+    {
+        message="\n\nAvg Accuracy= "+to_string(avg_accuracy)+"%"+" correct= "+to_string(correct)+" total= "+to_string(test_data.data.size());
+        print_message();
+        message="\n\nTotal Accuracy= "+to_string((((float)correct)/((float)test_data.data.size()))*100)+"%"+" correct= "+to_string(correct)+" total= "+to_string(test_data.data.size());
+        print_message();
+    }
+    return avg_accuracy;
 }
 
 void segment_class::print_prediction(nn_core_data_package_class* data_pack,int train_test_predict)//prints the data and predicted label to a file. Also displays the accuracy.
@@ -318,7 +341,17 @@ void segment_class::split_attributes_for_each_core()//ok tested
         {
             nn_core_filtered_data f_data;
             f_data.label=f_train_data[b].label;
-            for(int c=0;c<f_train_data[b].data.size();c++)//for each data
+            int count;
+            if(!critical_variables_set)
+            {   
+                if(f_train_data[b].data.size()<200)
+                {   count=f_train_data[b].data.size()/2;}
+                else
+                {   count=200;}
+            }
+            else
+            {   count=f_train_data[b].data.size();}
+            for(int c=0;c<count;c++)//for each data
             {
                 data.clear();
                 for(int d=start;(d<start+no_of_attributes_per_core_balanced && d<f_train_data[b].data[c].size());d++)//for each attribute
@@ -376,6 +409,7 @@ void segment_class::create_cores()
         else
         {   ds1.no_of_elements_in_each_record=no_of_attributes_per_core_balanced+extra_attributes_in_last_core;}
         core_class* core=new core_class(a,a,segment_aim,segment_no,"core_"+to_string(a),ds1);
+        core->set_critical_variable(critical_variable);
         core_vector.push_back(core);
     }
     f_train_data_split.resize(no_of_cores_required);
@@ -538,45 +572,106 @@ void segment_class::datapack_analyzer(nn_core_data_package_class* data_pack)
     }
 }
 
-void segment_class::set_lower_firing_constrain_rhs()
+void segment_class::calculate_critical_variables(int no_of_threads)
 {
-    float value1=0,value2=0,value3=0;
-    for(int a=0;a<f_train_data.size();a++)
-    {
-        value1=0;
-        for(int b=0;(b<f_train_data.at(a).data.size() && b<5);b++)
-        {
-            value2=0;
-            for(int c=0;c<f_train_data.at(a).data.at(b).size();c++)
-            {   value2+=abs(f_train_data.at(a).data.at(b).at(c));}
-            value2=value2/f_train_data.at(a).data.at(b).size();
-            value1+=value2;
-        }
-        value1=value1/5;
-        value3+=value1;
-    }
-    value3=value3/f_train_data.size();
-    //lower_firing_constrain_rhs=150;
-    if(value3<10+30)
-    {   value3=60;}
-    ds.upper_not_firing_constrain_rhs=10;//10
-    ds.lower_firing_constrain_rhs=value3;//*(2.0/3.7);//65
-    cout<<"\n\nlower_firing_constrain_rhs= "<<ds.lower_firing_constrain_rhs;
-    int gh;cin>>gh;
+    chromosome critical_variable1=start_genetic_algorithm(100,100,5,no_of_threads);
+    critical_variables_set=true;
+    set_critical_variable(critical_variable1);
+    cout<<"\nflatening_fx_enabled: "<<critical_variable1.flatening_fx_enabled;
+    cout<<"\nzero_weight_remover: "<<critical_variable1.zero_weight_remover;
+    cout<<"\nextreame_weight_remover: "<<critical_variable1.extreame_weight_remover;
+    cout<<"\nfp_change_value: "<<critical_variable1.fp_change_value;
+    cout<<"\nsummation_temp_threshold: "<<critical_variable1.summation_temp_thershold;
+    cout<<"\nrhs_upper: "<<critical_variable1.rhs_upper;
+    cout<<"\nrhs_lower: "<<critical_variable1.rhs_lower;
+    cout<<"\nattributes_per_core: "<<critical_variable1.attributes_per_core;
 }
 
-void segment_class::train(nn_core_data_package_class* data_pack,bool network_avail_status,int train_test_predict,int no_of_threads)
+void segment_class::train(int no_of_threads,int train_test_predict,chromosome& current_critical_variable)
+{
+    if(!critical_variables_set)
+    {
+        set_critical_variable(current_critical_variable);
+        critical_variables_set=false;
+        for(int a=0;a<core_vector.size();a++)
+        {   delete core_vector[a];}
+        core_vector.clear();
+        f_train_data_split.clear();
+        create_cores();
+        split_attributes_for_each_core();
+        //cout<<"\ncores= "<<f_train_data_split.size()<<" l="<<f_train_data_split[0].size()<<" l2="<<f_train_data.size();
+        //int gh;cin>>gh;
+    }
+    if(no_of_threads==1)
+    {
+        for(int a=0;a<core_vector.size();a++)
+        {
+            if(critical_variables_set)
+            {
+                message.clear();
+                message="\nTraining Core "+to_string(core_vector[a]->return_core_no());
+                print_message();
+            }
+            //cout<<"\n\nsize= "<<f_train_data_split[a].size();
+            //int gh;cin>>gh;
+            core_vector[a]->load_training_data_into_core(f_train_data_split[a],no_of_threads);
+            core_vector[a]->train_core();
+            if(critical_variables_set)
+            {   core_vector[a]->save_core();}
+            if(critical_variables_set)
+            {
+                message.clear();
+                message="\nCore "+to_string(core_vector[a]->return_core_no())+" training complete.";
+                print_message();
+            }
+        }
+    }
+    else
+    {
+        vector<thread*> thread_vec(core_vector.size());
+        for(int a=0;a<thread_vec.size();a++)
+        {
+            if(critical_variables_set)
+            {
+                message.clear();
+                message="\nTraining Core "+to_string(core_vector[a]->return_core_no());
+                print_message();
+            }
+            core_vector[a]->load_training_data_into_core(f_train_data_split[a],no_of_threads);
+            thread_vec[a]=new thread(&core_class::train_core,core_vector[a]);
+        }
+        for(int a=0;a<thread_vec.size();a++)
+        {   
+            thread_vec[a]->join();
+            if(critical_variables_set)
+            {
+                message.clear();
+                message="\nCore "+to_string(core_vector[a]->return_core_no())+" training complete.";
+                print_message();
+            }
+        }
+        if(critical_variables_set)
+        {
+            for(int a=0;a<core_vector.size();a++)
+            {   core_vector[a]->save_core();}
+        }
+    }
+    float avg_accuracy=0;
+    if(train_test_predict==1 || !critical_variables_set)
+    {   
+        //test();
+        avg_accuracy=testing_for_each_label();
+        current_critical_variable.fitness=avg_accuracy;
+    }
+}
+
+void segment_class::start_trainer(nn_core_data_package_class* data_pack,bool network_avail_status,int train_test_predict,int no_of_threads)
 {
     datapack_analyzer(data_pack);//function checked!
     //filtering data according to labels
     filter(data_pack,train_test_predict);//f_train_data pack gets created here.
     data_pack->data.clear();
     data_pack->labels.clear();
-    set_lower_firing_constrain_rhs();
-    if(core_vector.size()==0)//this means core save file not found and fresh cores need to be created
-    {   create_cores();}
-    split_attributes_for_each_core();
-    f_train_data.clear();
     bool network_loaded_correctly=true;
     if(network_avail_status)
     {
@@ -597,6 +692,10 @@ void segment_class::train(nn_core_data_package_class* data_pack,bool network_ava
     }
     if(network_loaded_correctly)
     {
+        if(!critical_variables_set)
+        {
+            calculate_critical_variables(no_of_threads);
+        }
         if(!network_avail_status)
         {
             message.clear();
@@ -609,47 +708,14 @@ void segment_class::train(nn_core_data_package_class* data_pack,bool network_ava
         print_message();
         auto start = high_resolution_clock::now();
         //training by threading can be done here in future
-        if(no_of_threads==1)
-        {
-            for(int a=0;a<core_vector.size();a++)
-            {
-                message.clear();
-                message="\nTraining Core "+to_string(core_vector[a]->return_core_no());
-                print_message();
-                core_vector[a]->load_training_data_into_core(f_train_data_split[a],no_of_threads);
-                core_vector[a]->train_core();
-                core_vector[a]->save_core();
-                message.clear();
-                message="\nCore "+to_string(core_vector[a]->return_core_no())+" training complete.";
-                print_message();
-            }
-        }
-        else
-        {
-            vector<thread*> thread_vec(core_vector.size());
-            for(int a=0;a<thread_vec.size();a++)
-            {
-                message.clear();
-                message="\nTraining Core "+to_string(core_vector[a]->return_core_no());
-                print_message();
-                core_vector[a]->load_training_data_into_core(f_train_data_split[a],no_of_threads);
-                thread_vec[a]=new thread(&core_class::train_core,core_vector[a]);
-            }
-            for(int a=0;a<thread_vec.size();a++)
-            {   
-                thread_vec[a]->join();
-                message.clear();
-                message="\nCore "+to_string(core_vector[a]->return_core_no())+" training complete.";
-                print_message();
-            }
-            for(int a=0;a<core_vector.size();a++)
-            {   core_vector[a]->save_core();}
-        }
-        if(train_test_predict==1)
+        if(core_vector.size()==0)//this means core save file not found and fresh cores need to be created
         {   
-            //test();
-            testing_for_each_label();
+            f_train_data_split.clear();
+            create_cores();
         }
+        split_attributes_for_each_core();
+        f_train_data.clear();
+        train(no_of_threads,train_test_predict,critical_variable);
         auto end = high_resolution_clock::now();
         auto duration = duration_cast<microseconds>(end - start);
         message.clear();
@@ -682,7 +748,7 @@ void segment_class::start_segment(int no_of_threads)//train_test_predict=1//trai
     if(check_if_datapack_has_valid_labels(data_pack)==true && train_test_predict<2)//true
     {
         bool network_avail_status=load_segment_if_available(0,0,false,"");
-        train(data_pack,network_avail_status,train_test_predict,no_of_threads);
+        start_trainer(data_pack,network_avail_status,train_test_predict,no_of_threads);
     }
     else if(train_test_predict==3)//making prediction on used entered individual data.
     {
@@ -703,7 +769,7 @@ void segment_class::start_segment(int no_of_threads)//train_test_predict=1//trai
     }
     else if(train_test_predict==4)//auto training mode
     {
-        train(data_pack,false,train_test_predict,no_of_threads);
+        start_trainer(data_pack,false,train_test_predict,no_of_threads);
     }
     else
     {
@@ -727,6 +793,17 @@ void segment_class::add_data(nn_core_data_package_class* data_pack1,int train_te
     data_division=data_division2;
     network_save_file_name=network_save_file_name1;
     cout<<"\ndata_pack= "<<data_pack->data.size()<<" train_test_predict="<<train_test_predict<<" data_division="<<data_division<<" save_file_name="<<network_save_file_name;
+}
+
+void segment_class::set_critical_variable(chromosome critical_variable1)
+{
+   critical_variables_set=true;
+   no_of_attributes_per_core_default=critical_variable1.attributes_per_core;
+   ds.lower_firing_constrain_rhs=critical_variable1.rhs_lower;
+   ds.upper_not_firing_constrain_rhs=critical_variable1.rhs_upper;
+   critical_variable=critical_variable1;
+   //for(int a=0;a<core_vector.size();a++)
+   //{    core_vector[a]->set_critical_variable(critical_variable1);}
 }
 
 segment_class::segment_class(int segment_aim1,int segment_no1,string segment_name1)

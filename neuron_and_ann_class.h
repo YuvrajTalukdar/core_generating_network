@@ -69,11 +69,27 @@ struct path_struct{
 
 class ann{
     private:
+    //critical variables
+    bool flatening_fx_enabled;
+    bool zero_weight_remover;
+    bool extreame_weight_remover;
+    int fp_change_value;
+    int summation_temp_thershold;
+    //operation variables
     int label_neuron_to_be_fired_id=0;
     bool label_neuron_reset_status=false;
     
     public:
     vector<float> elements;
+
+    void set_critical_variables(chromosome critical_variables)
+    {
+        flatening_fx_enabled=critical_variables.flatening_fx_enabled;
+        zero_weight_remover=critical_variables.zero_weight_remover;
+        extreame_weight_remover=critical_variables.extreame_weight_remover;
+        fp_change_value=critical_variables.fp_change_value;
+        summation_temp_thershold=critical_variables.summation_temp_thershold;
+    }
 
     void set_elements_vector(vector<float> e)
     {   elements=e;}
@@ -124,7 +140,11 @@ class ann{
             if(abs(weight_matrix[a]>1000))
             {   extreame_value++;}
         }
-        if(zero_count<weight_matrix.size()/2&& extreame_value<2)
+        if(!extreame_weight_remover)
+        {   extreame_value=0;}
+        if(!zero_weight_remover)
+        {   zero_count=0;}
+        if((zero_count<weight_matrix.size()/2) && (extreame_value<2))
         {   
             path_struct new_path;
             int id=path.size();
@@ -187,24 +207,25 @@ class ann{
                 float summation_temp=0;
                 if(path[c].output_neuron_id==a)
                 {
-                    output_neurons[a].firing_point+=40;//50,40
+                    output_neurons[a].firing_point+=fp_change_value;//50,40
                     for(int d=0;d<path[c].weight_matrix.size();d++)//weight matrix size = input neuron size
                     {
                         summation_temp=summation_temp+input_neurons[d].return_data()*path[c].weight_matrix[d]; //need to be modified...................................
                         //cout<<"i= "<<input_neurons[d].return_data()<<" w= "<<path[c].weight_matrix[d]<<endl;
                     }
-                    if(summation_temp>2000 || summation_temp<-2000)//500
+                    if(summation_temp>summation_temp_thershold || summation_temp<summation_temp_thershold*-1)//500
                     {
                         summation_temp=0;
-                        output_neurons[a].firing_point-=40;//50,40
+                        output_neurons[a].firing_point-=fp_change_value;//50,40
                     }
                     else if(summation_temp>0&&summation_temp<40)
                     {
                         summation_temp=0;
-                        output_neurons[a].firing_point-=40;//50,40
+                        output_neurons[a].firing_point-=fp_change_value;//50,40
                     }
                     //cout<<"\nsummation_temp1= "<<summation_temp;
-                    summation_temp=((atan(summation_temp)*180/3.1415)/90)*100;
+                    if(flatening_fx_enabled)
+                    {   summation_temp=((atan(summation_temp)*180/3.1415)/90)*100;}
                     summation_vec.push_back(summation_temp);
                     //cout<<"\nsummation_temp2= "<<summation_temp;
                     summation=summation+summation_temp;

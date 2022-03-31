@@ -39,3 +39,18 @@ struct nn_core_filtered_data //its fot the filtered data used in the core class
     vector<vector<float>> data;
     int label;
 };
+
+struct chromosome
+{
+    int id;
+    float fitness;//avg accuracy
+    //genes
+    bool flatening_fx_enabled;//0
+    bool extreame_weight_remover;//1
+    bool zero_weight_remover;//2
+    int fp_change_value;//3
+    int summation_temp_thershold;//4
+    int rhs_upper;//5
+    int rhs_lower;//6
+    int attributes_per_core;//7
+};

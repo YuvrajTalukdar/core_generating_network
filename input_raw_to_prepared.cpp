@@ -43,7 +43,7 @@ void breaker(raw_data* rw_data,string line)
         {
             if(line.at(a)==',')
             {
-                float val = atof(num_char)*100;  
+                float val = atof(num_char)*10;  
                 //cout<<val<<endl;
                 one_row_of_data.push_back(val);
                 for(int b=0;b<20;b++){
@@ -55,7 +55,7 @@ void breaker(raw_data* rw_data,string line)
             ch[1]='\0';
             strcat(num_char,ch);
         }
-        one_row_of_data.push_back(atof(num_char)*100);
+        one_row_of_data.push_back(atof(num_char)*10);
         rw_data->rawData.push_back(one_row_of_data);
     }
 }
@@ -146,6 +146,62 @@ void display_prepared_data(nn_core_data_package_class* data_pack)
     }
 }
 
+bool get_true_false(string msg)
+{
+    bool value;
+    char option;
+    point1:
+    cout<<msg;
+    cin>>option;
+    if(option=='y'||option=='Y')
+    {   value=true;}
+    else if(option=='n'||option=='N')
+    {   value=false;}
+    else
+    {   cout<<"\nWrong Option!!";goto point1;}
+    return value;
+}
+chromosome get_critical_variables_from_user()
+{
+    chromosome critical_variables;
+    char option;
+    point1:
+    cout<<"\nDo you want to enter the critical variables?(y/n) ";
+    cin>>option;
+    if(option=='y'||option=='Y')
+    {   
+        critical_variables.id=0;
+        point2:
+        critical_variables.flatening_fx_enabled=get_true_false("\nflatening_fx_enabled (y/n): ");
+        critical_variables.extreame_weight_remover=get_true_false("extreame_weight_remover (y/n): ");
+        critical_variables.zero_weight_remover=get_true_false("zero_weight_remover (y/n): ");
+        cout<<"fp_change_value: ";
+        cin>>critical_variables.fp_change_value;
+        cout<<"summation_temp_threshold: ";
+        cin>>critical_variables.summation_temp_thershold;
+        cout<<"rhs_upper: ";
+        cin>>critical_variables.rhs_upper;
+        cout<<"rhs_lower: ";
+        cin>>critical_variables.rhs_lower;
+        cout<<"attributes_per_core: ";
+        cin>>critical_variables.attributes_per_core;
+        point3:
+        cout<<"\nDo you confirm the critical variables?(y/n) ";
+        cin>>option;
+        if(option=='y'||option=='Y')
+        {}
+        else if(option=='n'||option=='N')
+        {   goto point2;}
+        else
+        {   cout<<"\nWrong Option!!";goto point3;}
+    }
+    else if(option=='n'||option=='N')
+    {   critical_variables.id=-1;}
+    else
+    {   cout<<"\nWrong Option!!";goto point1;}
+    return critical_variables;
+}
+
 void core_starter(string &file_name_local,int &test_train_predict,float &data_division,string &network_save_file_name,int &no_of_threads)
 {
     nn_core_data_package_class data_pack;
@@ -155,9 +211,17 @@ void core_starter(string &file_name_local,int &test_train_predict,float &data_di
         prepare_data(&data_pack);
         cout<<"data file reading success!!!\n";
     }
-    //display_prepared_data(&data_pack);
+    
     segment_class segment1(0,0,"default_segment");
-    //cout<<"\nsize="<<data_pack.data.size();
+    if(test_train_predict==0||test_train_predict==1||test_train_predict==4)
+    {
+        //0: train entire dataset
+        //1: train and test dataset
+        //4: auto train mode
+        chromosome critical_variables=get_critical_variables_from_user();
+        if(critical_variables.id!=-1)
+        {   segment1.set_critical_variable(critical_variables);}
+    }
     segment1.add_data(&data_pack,test_train_predict,data_division,network_save_file_name);
     segment1.start_segment(no_of_threads);
 }

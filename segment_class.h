@@ -2,6 +2,7 @@
 core class handles natural cores
 */
 #include<chrono>
+#include<random>
 #include"neuron_and_ann_class.h"
 #include"core_class.h"
 
@@ -10,6 +11,36 @@ using namespace std::chrono;
 
 class segment_class{
     private:
+    /*GENETIC ALGORITHM COMPONENTS START*/
+    //gene range
+    static const int fp_change_value_min=30,fp_change_value_max=60;
+    static const int summation_temp_thershold_min=1500,summation_temp_thershold_max=5000;
+    static const int rhs_upper_min=2,rhs_upper_max=20;
+    static const int rhs_lower_min=40,rhs_lower_max=150;
+    static const int attributes_per_core_min=8,attributes_per_core_max=30;
+    //algorithm critical data
+    int population_size;
+    int no_of_genes_to_mutate;
+    vector<chromosome> population;
+    //other mics data
+    int current_chromosome_id=0;
+
+    //mics functions
+    void print_population(vector<chromosome>& population);
+    int get_random_number(int min,int max);
+    bool get_random_bool();
+    static bool comparator(chromosome c1,chromosome c2);
+    //genetic algorithm critical functions
+    void mutation(vector<chromosome>& population);
+    void chromosome_data_transfer(int crossover_index,bool before,chromosome& source,chromosome& destination);
+    vector<chromosome> crossover(vector<chromosome>& population);
+    vector<chromosome> tournament_selection(vector<chromosome> population);
+    void generate_initial_population();
+    void calc_fitness_threaded(int no_of_threads,vector<chromosome>& population);
+    chromosome start_genetic_algorithm(int pop_size,int iterations,int mutation_percentage,int no_of_threads);
+    /*GENETIC ALGORITHM COMPONENTS END*/
+    
+    
     vector<core_class*> core_vector;
     vector<string> core_save_file_name_vector;
 
@@ -36,13 +67,17 @@ class segment_class{
     int predict_progress_bar_numerator=0;//for the predict progress bar
     int predict_progress_bar_denominator=0;//for the predict progress bar
 
+    //genetic algorithm variables
+    bool critical_variables_set=false;
+    chromosome critical_variable;
+
     void save_segment();
 
     bool check_if_datapack_has_valid_labels(nn_core_data_package_class* data_pack);//if a label is 0 than it is invalid
 
     bool load_segment_if_available(int segment_aim,int segment_no,bool file_name_received,string file_name);
 
-    void set_lower_firing_constrain_rhs();
+    //void set_lower_firing_constrain_rhs();
 
     void datapack_analyzer(nn_core_data_package_class* data_pack);//it fills up the datapack_structure_defination ds after analyzing the datapack. 
     struct shuffling_data{
@@ -68,7 +103,11 @@ class segment_class{
 
     void create_cores();
 
-    void train(nn_core_data_package_class* data_pack,bool network_avail_status,int train_test_predict,int no_of_threads);//there cannot be a case of invalid network and data without labels.
+    void calculate_critical_variables(int no_of_threads);
+
+    void train(int no_of_threads,int train_test_predict,chromosome& current_critical_variable);    
+
+    void start_trainer(nn_core_data_package_class* data_pack,bool network_avail_status,int train_test_predict,int no_of_threads);//there cannot be a case of invalid network and data without labels.
 
     void checker_df(vector<neuron> &output_neurons);
 
@@ -82,7 +121,7 @@ class segment_class{
 
     void test();//parameters not required now
     //memory_optimization1
-    void testing_for_each_label(/*,int train_test_predict*/);
+    float testing_for_each_label(/*,int train_test_predict*/);
     
     void print_prediction(nn_core_data_package_class* data_pack,int train_test_predict);
 
@@ -117,6 +156,8 @@ class segment_class{
     }
 
     public:
+
+    void set_critical_variable(chromosome critical_cariable);
 
     void start_segment(int no_of_threads);//train_test_predict=1//train_test_predic is required for extra assurance
 

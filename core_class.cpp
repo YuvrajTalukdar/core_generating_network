@@ -1941,7 +1941,21 @@ void core_class::print_message()
     }
 }
 
-core_class::core_class(int core_aim1,int core_no1,int parent_segment_aim1,int parent_segment_no1,string core_name1,datapack_structure_defination ds1)
+void core_class::set_critical_variable(chromosome critical_variable)
+{   
+    network1.set_critical_variables(critical_variable);
+    network1.path.clear();
+    ds.lower_firing_constrain_rhs=critical_variable.rhs_lower;
+    ds.upper_not_firing_constrain_rhs=critical_variable.rhs_upper;
+}
+
+core_class::core_class(
+    int core_aim1,
+    int core_no1,
+    int parent_segment_aim1,
+    int parent_segment_no1,
+    string core_name1,
+    datapack_structure_defination& ds1)
 {
     if(id_lock==false)
     {
