@@ -230,7 +230,6 @@ void segment_class::test()//finds the overall accuracy of the network
 
 float segment_class::testing_for_each_label()//finds the accuracy of each label
 {
-    //filter(&test_data,0);//entire dataset will be stored in the f_train_data when train_test_predict=0
     nn_core_filtered_data f_data;
     vector<nn_core_filtered_data> f_test_data_vector;
     for(int a=0;a<ds.elements.size();a++)
@@ -344,10 +343,11 @@ void segment_class::split_attributes_for_each_core()//ok tested
             int count;
             if(!critical_variables_set)
             {   
-                if(f_train_data[b].data.size()<200)
+                count=f_train_data[b].data.size();
+                /*if(f_train_data[b].data.size()<200)
                 {   count=f_train_data[b].data.size()/2;}
                 else
-                {   count=200;}
+                {   count=200;}*/
             }
             else
             {   count=f_train_data[b].data.size();}
@@ -574,9 +574,13 @@ void segment_class::datapack_analyzer(nn_core_data_package_class* data_pack)
 
 void segment_class::calculate_critical_variables(int no_of_threads)
 {
-    chromosome critical_variable1=start_genetic_algorithm(100,100,5,no_of_threads);
+    chromosome critical_variable1=start_genetic_algorithm(10,30,5,no_of_threads);
     critical_variables_set=true;
     set_critical_variable(critical_variable1);
+    for(int a=0;a<core_vector.size();a++)
+    {   delete core_vector[a];}
+    core_vector.clear();
+    f_train_data_split.clear();
     cout<<"\nflatening_fx_enabled: "<<critical_variable1.flatening_fx_enabled;
     cout<<"\nzero_weight_remover: "<<critical_variable1.zero_weight_remover;
     cout<<"\nextreame_weight_remover: "<<critical_variable1.extreame_weight_remover;
@@ -599,8 +603,6 @@ void segment_class::train(int no_of_threads,int train_test_predict,chromosome& c
         f_train_data_split.clear();
         create_cores();
         split_attributes_for_each_core();
-        //cout<<"\ncores= "<<f_train_data_split.size()<<" l="<<f_train_data_split[0].size()<<" l2="<<f_train_data.size();
-        //int gh;cin>>gh;
     }
     if(no_of_threads==1)
     {
@@ -612,8 +614,6 @@ void segment_class::train(int no_of_threads,int train_test_predict,chromosome& c
                 message="\nTraining Core "+to_string(core_vector[a]->return_core_no());
                 print_message();
             }
-            //cout<<"\n\nsize= "<<f_train_data_split[a].size();
-            //int gh;cin>>gh;
             core_vector[a]->load_training_data_into_core(f_train_data_split[a],no_of_threads);
             core_vector[a]->train_core();
             if(critical_variables_set)

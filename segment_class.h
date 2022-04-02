@@ -26,6 +26,7 @@ class segment_class{
     int current_chromosome_id=0;
 
     //mics functions
+    void save_chromosome(chromosome& chromosome);
     void print_population(vector<chromosome>& population);
     int get_random_number(int min,int max);
     bool get_random_bool();

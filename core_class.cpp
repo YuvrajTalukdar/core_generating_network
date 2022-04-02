@@ -425,7 +425,7 @@ void modified_simplex_solver::make_solution_feasible::pivot_element_finder(simpl
 
 bool modified_simplex_solver::make_solution_feasible::add_index_data(int p_col,int p_row)
 {
-    if(buffer_obj.p_col_index.size()<2 && buffer_obj.p_row_index.size()<2)
+    if(buffer_obj.p_col_index.size()<4 && buffer_obj.p_row_index.size()<4)
     {
         buffer_obj.p_col_index.push_back(p_col);
         buffer_obj.p_row_index.push_back(p_row);
@@ -443,19 +443,10 @@ bool modified_simplex_solver::make_solution_feasible::add_index_data(int p_col,i
         {   return status;}
         else
         {
-            vector<int> p_row_temp;
-            vector<int> p_col_temp;
-            for(int a=1;a<buffer_obj.p_col_index.size();a++)
-            {
-                p_row_temp.push_back(buffer_obj.p_row_index[a]);
-                p_col_temp.push_back(buffer_obj.p_col_index[a]);
-            }
-            p_row_temp.push_back(p_row);
-            p_col_temp.push_back(p_col);
-            buffer_obj.p_col_index.clear();
-            buffer_obj.p_row_index.clear();
-            buffer_obj.p_col_index=p_col_temp;
-            buffer_obj.p_row_index=p_row_temp;
+            buffer_obj.p_col_index.push_back(p_col);
+            buffer_obj.p_row_index.push_back(p_row);
+            buffer_obj.p_col_index.erase(buffer_obj.p_col_index.begin());
+            buffer_obj.p_row_index.erase(buffer_obj.p_row_index.begin());
             return false;
         }   
     }
@@ -567,8 +558,13 @@ bool modified_simplex_solver::start_solver(converted_data_pack* cdp)
     bool corrupt_cdp=check_for_corrupt_cdp(cdp);
     if(corrupt_cdp==true)
     {
-        cout<<"got it!!!!";
+        cout<<"\ngot it!!!!";
         cdp->corupt_pack=true;
+        delete st;
+        cout<<"\nlower_rhs= "<<lower_firing_constrain_rhs;
+        cout<<"\nupper rhs= "<<upper_not_firing_constrain_rhs;
+        cout<<"\nfiring_data_size= "<<cdp->firing_data.size();
+        cout<<"\nnot_firing_size= "<<cdp->not_firing_data.size();
         return false;
     }
     else if(corrupt_cdp==false)
@@ -718,7 +714,7 @@ bool modified_simplex_solver::start_solver(converted_data_pack* cdp)
             }
             if(conflict_id.id.size()==cdp->firing_data.size() && cdp->firing_data.size()==1)
             {
-                cout<<"\nbingo!!";
+                //cout<<"\nbingo!!";
                 cdp->corupt_pack=true;
             }
             else if(conflict_id.id.size()==cdp->firing_data.size())//for handling 0:0 bug
@@ -998,7 +994,11 @@ void simplex_solver_data_preparation_class::lp_solver()
         shared_block_data_obj.no_of_c_datapacks_completed++;
         point1:
         //cdp_spliter(cdp,a);
-        lpp_solver1.start_solver(cdp[a]);
+        if(cdp[a]->firing_data.size()!=0 && cdp[a]->not_firing_data.size()!=0)
+        {   lpp_solver1.start_solver(cdp[a]);}
+        else
+        {   continue;}
+        //lpp_solver1.start_solver(cdp[a]);
         if(lpp_solver1.cyclic_bug_present()==true)
         {
             message.clear();

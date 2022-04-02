@@ -2,7 +2,7 @@
 CC=g++
 LIBS= -lpthread
 # use -Wall for displaying all warnings
-CXXFLAGS= -std=c++17 -march=native -mtune=native -O2 -g
+CXXFLAGS= -std=c++17 -march=native -mtune=native -O2
 CXXFLAGS2= -std=c++17 -march=native -mtune=native -g
 all: a.out
 

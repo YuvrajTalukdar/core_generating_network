@@ -274,7 +274,16 @@ void segment_class::calc_fitness_threaded(int no_of_threads,vector<chromosome>& 
 {
     for(int a=0;a<population.size();a++)
     {
-        train(no_of_threads,1,population[a]);
+        save_chromosome(population[a]);
+        try{
+            train(no_of_threads,1,population[a]);
+        }
+        catch(exception &e)
+        {
+            cout<<"\nCrashed!!";
+            save_chromosome(population[a]);
+            int gh;cin>>gh;
+        }
         //cout<<"\na= "<<a<<" f= "<<population[a].fitness;
     }
     /*if(no_of_threads==1)
@@ -298,12 +307,9 @@ chromosome segment_class::start_genetic_algorithm(int pop_size,int iterations,in
     cout<<"\nthreads= "<<no_of_threads;
     generate_initial_population();
     //print_population(population);
-    //int gh;cin>>gh;
     //fitness calculation
     cout<<"\n\nCalculation initial population fitness...";
     calc_fitness_threaded(no_of_threads,population);
-    //cout<<"\n\ncheck2";
-    //int gh2;cin>>gh2;
     int total_value=0;
     for(int a=0;a<iterations;a++)
     {
@@ -327,11 +333,8 @@ chromosome segment_class::start_genetic_algorithm(int pop_size,int iterations,in
         {   
             //cout<<"\nfitness= "<<population[b].fitness;
             total_value+=population[b].fitness;
-            //cout<<population[b].fitness<<",";
         }
-        //cout<<"\ncheck6 p_size= "<<population.size();
         cout<<"\nIteration: "<<a<<", total_population_fitness: "<<total_value<<", max_fitness: "<<population[0].fitness;
-        //int gh;cin>>gh;
     }
     return population[0];
 }
@@ -342,4 +345,18 @@ void segment_class::print_population(vector<chromosome>& population)
     {
         cout<<"\n"<<population[a].flatening_fx_enabled<<","<<population[a].extreame_weight_remover<<","<<population[a].zero_weight_remover<<","<<population[a].fp_change_value<<","<<population[a].summation_temp_thershold<<","<<population[a].rhs_upper<<","<<population[a].rhs_lower<<","<<population[a].attributes_per_core;
     }
+}
+
+void segment_class::save_chromosome(chromosome& chromosome)
+{
+    ofstream file1("critical_var.txt",ios::out);
+    file1<<"\nflatening_fx_enabled: "<<chromosome.flatening_fx_enabled;
+    file1<<"\nzero_weight_remover: "<<chromosome.zero_weight_remover;
+    file1<<"\nextreame_weight_remover: "<<chromosome.extreame_weight_remover;
+    file1<<"\nfp_change_value: "<<chromosome.fp_change_value;
+    file1<<"\nsummation_temp_threshold: "<<chromosome.summation_temp_thershold;
+    file1<<"\nrhs_upper: "<<chromosome.rhs_upper;
+    file1<<"\nrhs_lower: "<<chromosome.rhs_lower;
+    file1<<"\nattributes_per_core: "<<chromosome.attributes_per_core;
+    file1.close();
 }
