@@ -404,10 +404,6 @@ void segment_class::create_cores()
         ds1.no_of_labels=ds.no_of_labels;
         ds1.lower_firing_constrain_rhs=ds.lower_firing_constrain_rhs;
         ds1.upper_not_firing_constrain_rhs=ds.upper_not_firing_constrain_rhs;
-        if(a!=no_of_cores_required-1)
-        {   ds1.no_of_elements_in_each_record=no_of_attributes_per_core_balanced;}
-        else
-        {   ds1.no_of_elements_in_each_record=no_of_attributes_per_core_balanced+extra_attributes_in_last_core;}
         core_class* core=new core_class(a,a,segment_aim,segment_no,"core_"+to_string(a),ds1);
         core->set_critical_variable(critical_variable);
         core_vector.push_back(core);

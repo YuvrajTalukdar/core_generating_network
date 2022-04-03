@@ -1631,6 +1631,8 @@ void core_class::load_training_data_into_core(vector<nn_core_filtered_data>& f_d
 {
     no_of_threads=&no_of_threads1;
     f_data_pack=&f_data_pack1;
+    ds.no_of_elements_in_each_record=f_data_pack->at(0).data[0].size();
+    network_structure_modifier();
 }
 
 void core_class::train_core()
@@ -1966,7 +1968,6 @@ core_class::core_class(
         core_name=core_name1;
         id_lock=true;
         ds=ds1;
-        network_structure_modifier();
     }
     else
     {  
