@@ -43,7 +43,7 @@ void breaker(raw_data* rw_data,string line)
         {
             if(line.at(a)==',')
             {
-                float val = atof(num_char)*100;  
+                float val = atof(num_char)*10;  
                 //cout<<val<<endl;
                 one_row_of_data.push_back(val);
                 for(int b=0;b<20;b++){
@@ -55,7 +55,7 @@ void breaker(raw_data* rw_data,string line)
             ch[1]='\0';
             strcat(num_char,ch);
         }
-        one_row_of_data.push_back(atof(num_char)*100);
+        one_row_of_data.push_back(atof(num_char)*10);
         rw_data->rawData.push_back(one_row_of_data);
     }
 }
@@ -161,7 +161,7 @@ bool get_true_false(string msg)
     {   cout<<"\nWrong Option!!";goto point1;}
     return value;
 }
-chromosome get_critical_variables_from_user()
+chromosome get_critical_variables_from_user(unsigned int &iterations,unsigned int &population_size,unsigned int &mutation_percentage)
 {
     chromosome critical_variables;
     char option;
@@ -199,6 +199,16 @@ chromosome get_critical_variables_from_user()
     {   critical_variables.id=-1;}
     else
     {   cout<<"\nWrong Option!!";goto point1;}
+    if(critical_variables.id==-1)
+    {
+        cout<<"\nNo of iteratiosn: ";
+        cin>>iterations;
+        cout<<"\nInitial population size: ";
+        cin>>population_size;
+        cout<<"\nmutation percentage: ";
+        cin>>mutation_percentage;
+    }
+
     return critical_variables;
 }
 
@@ -209,7 +219,7 @@ void core_starter(string &file_name_local,int &test_train_predict,float &data_di
     if(test_train_predict==0 || test_train_predict==1 || test_train_predict==2 || test_train_predict==4)
     {   
         prepare_data(&data_pack);
-        cout<<"data file reading success!!!\n";
+        cout<<"\ndata file reading success!!!\n";
     }
     
     segment_class segment1(0,0,"default_segment");
@@ -218,9 +228,11 @@ void core_starter(string &file_name_local,int &test_train_predict,float &data_di
         //0: train entire dataset
         //1: train and test dataset
         //4: auto train mode
-        chromosome critical_variables=get_critical_variables_from_user();
+        unsigned int iterations,population_size,mutation_percentage;
+        chromosome critical_variables=get_critical_variables_from_user(iterations,population_size,mutation_percentage);
         if(critical_variables.id!=-1)
         {   segment1.set_critical_variable(critical_variables);}
+        segment1.set_ga_settings(iterations,population_size,mutation_percentage);
     }
     segment1.add_data(&data_pack,test_train_predict,data_division,network_save_file_name);
     segment1.start_segment(no_of_threads);

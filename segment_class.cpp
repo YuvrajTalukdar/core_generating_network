@@ -570,7 +570,7 @@ void segment_class::datapack_analyzer(nn_core_data_package_class* data_pack)
 
 void segment_class::calculate_critical_variables(int no_of_threads)
 {
-    chromosome critical_variable1=start_genetic_algorithm(10,30,5,no_of_threads);
+    chromosome critical_variable1=start_genetic_algorithm(no_of_threads);
     critical_variables_set=true;
     set_critical_variable(critical_variable1);
     for(int a=0;a<core_vector.size();a++)
@@ -593,9 +593,6 @@ void segment_class::train(int no_of_threads,int train_test_predict,chromosome& c
     {
         set_critical_variable(current_critical_variable);
         critical_variables_set=false;
-        for(int a=0;a<core_vector.size();a++)
-        {   delete core_vector[a];}
-        core_vector.clear();
         f_train_data_split.clear();
         create_cores();
         split_attributes_for_each_core();
@@ -624,7 +621,7 @@ void segment_class::train(int no_of_threads,int train_test_predict,chromosome& c
     }
     else
     {
-        vector<thread*> thread_vec(core_vector.size());
+        vector<thread> thread_vec(core_vector.size());
         for(int a=0;a<thread_vec.size();a++)
         {
             if(critical_variables_set)
@@ -634,11 +631,11 @@ void segment_class::train(int no_of_threads,int train_test_predict,chromosome& c
                 print_message();
             }
             core_vector[a]->load_training_data_into_core(f_train_data_split[a],no_of_threads);
-            thread_vec[a]=new thread(&core_class::train_core,core_vector[a]);
+            thread_vec[a]=thread(&core_class::train_core,core_vector[a]);
         }
         for(int a=0;a<thread_vec.size();a++)
         {   
-            thread_vec[a]->join();
+            thread_vec[a].join();
             if(critical_variables_set)
             {
                 message.clear();
@@ -646,18 +643,20 @@ void segment_class::train(int no_of_threads,int train_test_predict,chromosome& c
                 print_message();
             }
         }
+        thread_vec.clear();
         if(critical_variables_set)
         {
             for(int a=0;a<core_vector.size();a++)
             {   core_vector[a]->save_core();}
         }
     }
-    float avg_accuracy=0;
     if(train_test_predict==1 || !critical_variables_set)
     {   
         //test();
-        avg_accuracy=testing_for_each_label();
-        current_critical_variable.fitness=avg_accuracy;
+        current_critical_variable.fitness=testing_for_each_label();
+        for(int a=0;a<core_vector.size();a++)
+        {   delete core_vector[a];}
+        core_vector.clear();
     }
 }
 
@@ -800,6 +799,13 @@ void segment_class::set_critical_variable(chromosome critical_variable1)
    critical_variable=critical_variable1;
    //for(int a=0;a<core_vector.size();a++)
    //{    core_vector[a]->set_critical_variable(critical_variable1);}
+}
+
+void segment_class::set_ga_settings(unsigned int &iterations,unsigned int &pop_size,unsigned int &mutation_percentage1)
+{
+    ga_iterations=iterations;
+    population_size=pop_size;
+    mutation_percentage=mutation_percentage1;
 }
 
 segment_class::segment_class(int segment_aim1,int segment_no1,string segment_name1)

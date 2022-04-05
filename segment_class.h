@@ -19,7 +19,7 @@ class segment_class{
     static const int rhs_lower_min=40,rhs_lower_max=150;
     static const int attributes_per_core_min=8,attributes_per_core_max=30;
     //algorithm critical data
-    int population_size;
+    unsigned int population_size,ga_iterations,mutation_percentage;
     int no_of_genes_to_mutate;
     vector<chromosome> population;
     //other mics data
@@ -38,7 +38,7 @@ class segment_class{
     vector<chromosome> tournament_selection(vector<chromosome> population);
     void generate_initial_population();
     void calc_fitness_threaded(int no_of_threads,vector<chromosome>& population);
-    chromosome start_genetic_algorithm(int pop_size,int iterations,int mutation_percentage,int no_of_threads);
+    chromosome start_genetic_algorithm(int no_of_threads);
     /*GENETIC ALGORITHM COMPONENTS END*/
     
     
@@ -153,12 +153,13 @@ class segment_class{
                 }
             }
         }
-        
     }
 
     public:
 
     void set_critical_variable(chromosome critical_cariable);
+
+    void set_ga_settings(unsigned int &iterations,unsigned int &population_size,unsigned int &mutation_percentage);
 
     void start_segment(int no_of_threads);//train_test_predict=1//train_test_predic is required for extra assurance
 

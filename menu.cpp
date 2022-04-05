@@ -41,7 +41,7 @@ bool menu(string &file_name,int &test_train_predict,float &data_division,string 
     ioctl(0,TIOCGWINSZ,&w);
     point0:
     clrscr();
-    string heading="NON BACKPROPAGATION ALGORITHM TEST INTERFACE\n";
+    string heading="CORE GENERATING NETWORK TEST INTERFACE\n";
     cout<<setw(w.ws_col/2+heading.length()/2)<<heading;
     cout<<"\n\n1. Train network on the entire dataset\n"<<"2. Train and test the network\n"<<"3. Use a trained network to make predictions\n";
     cout<<"4. Enter individual data and predict the results using a trained network\n5. Auto train the network\n";
@@ -139,7 +139,7 @@ bool menu(string &file_name,int &test_train_predict,float &data_division,string 
         test_train_predict=1;
         char thread_option;
         point10:
-        cout<<"\n\nEnable multi threading(y/n): ";
+        cout<<"\nEnable multi threading(y/n): ";
         cin>>thread_option;
         if(thread_option=='y'||thread_option=='Y')
         {   no_of_threads=thread::hardware_concurrency();}

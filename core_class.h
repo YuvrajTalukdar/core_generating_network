@@ -197,14 +197,14 @@ class simplex_solver_data_preparation_class
     datapack_structure_defination* data_structure;
     converted_data_pack conflicting_data_buffer;
     modified_simplex_solver lpp_solver1;
-    vector<converted_data_pack*> cdp;//memory_optimization7 : vector<converted_data_pack> cdp turned to vector<converted_data_pack*> cdp 
+    vector<converted_data_pack> cdp;//memory_optimization7 : vector<converted_data_pack> cdp turned to vector<converted_data_pack*> cdp 
 
     void cdp_saver_in_mathematical_format(converted_data_pack* cdp);
     
     //void cdp_saver(converted_data_pack* cdp);
     void print_message();
     vector<converted_data_pack> fucked_up_cyclic_cdp;
-    void cdp_spliter(vector<converted_data_pack*> &cdps,int index);
+    void cdp_spliter(vector<converted_data_pack> &cdps,int index);
     public:
     static void cdp_viewer(converted_data_pack* cdp);
     void lp_solver();
@@ -237,7 +237,7 @@ class core_class
     //int predict_progress_bar_denominator=0;//for the predict progress bar
     //training information
     ann network1;
-    int* no_of_threads;
+    int no_of_threads;
     datapack_structure_defination ds;//for the data which will be processed by this particular core
     network_structure_defination ns;
 

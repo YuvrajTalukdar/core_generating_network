@@ -296,9 +296,8 @@ void segment_class::calc_fitness_threaded(int no_of_threads,vector<chromosome>& 
     }*/
 }
 
-chromosome segment_class::start_genetic_algorithm(int pop_size,int iterations,int mutation_percentage,int no_of_threads)
+chromosome segment_class::start_genetic_algorithm(int no_of_threads)
 {
-    population_size=pop_size;
     no_of_genes_to_mutate=8*mutation_percentage/100;
     if(no_of_genes_to_mutate==0)
     {   no_of_genes_to_mutate=3;}
@@ -311,7 +310,7 @@ chromosome segment_class::start_genetic_algorithm(int pop_size,int iterations,in
     cout<<"\n\nCalculation initial population fitness...";
     calc_fitness_threaded(no_of_threads,population);
     int total_value=0;
-    for(int a=0;a<iterations;a++)
+    for(int a=0;a<ga_iterations;a++)
     {
         //selection
         vector<chromosome> selected_parents=tournament_selection(population);
@@ -349,7 +348,7 @@ void segment_class::print_population(vector<chromosome>& population)
 
 void segment_class::save_chromosome(chromosome& chromosome)
 {
-    ofstream file1("critical_var.txt",ios::out);
+    ofstream file1("critical_var.txt",ios::app);
     file1<<"\nflatening_fx_enabled: "<<chromosome.flatening_fx_enabled;
     file1<<"\nzero_weight_remover: "<<chromosome.zero_weight_remover;
     file1<<"\nextreame_weight_remover: "<<chromosome.extreame_weight_remover;
