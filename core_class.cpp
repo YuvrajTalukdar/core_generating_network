@@ -1009,11 +1009,11 @@ void simplex_solver_data_preparation_class::lp_solver()
         }
         if(display_iterations==true)
         {
-            cout<<"\nfiring size= "<<cdp[0].firing_data.size()<<"\nnot firing size= "<<cdp[0].not_firing_data.size()<<"\n";
+            cout<<"\nfiring size= "<<cdp[a].firing_data.size()<<"\nnot firing size= "<<cdp[a].not_firing_data.size()<<"\n";
             cout<<"weight matrix: ";
-            for(int b=0;b<cdp[0].weight_matrix.size();b++)
+            for(int b=0;b<cdp[a].weight_matrix.size();b++)
             {
-                cout<<cdp[0].weight_matrix[b]<<",";
+                cout<<cdp[a].weight_matrix[b]<<",";
             }
             cout<<endl;
         }
@@ -1036,10 +1036,10 @@ void simplex_solver_data_preparation_class::lp_solver()
         // 1. create new path
         //   1a. provide the output neuron id. (training for which output neuron or which label. First neuron = label 2 second neuron = label 4)
         //   2b. push the weight matrix
-        if(cdp[0].corupt_pack==false)
+        if(cdp[a].corupt_pack==false)
         {   
             pthread_mutex_lock(&lock);
-            network->create_new_path(cdp[0].weight_matrix,cdp[0].firing_neuron_index);
+            network->create_new_path(cdp[a].weight_matrix,cdp[a].firing_neuron_index);
             //THE GREATE ELIMINATION ALGORITHM
             //if(network->return_no_of_paths()>0)
             //{   check_path_quality();}
