@@ -53,4 +53,5 @@ struct chromosome
     int rhs_upper;//5
     int rhs_lower;//6
     int attributes_per_core;//7
+    float data_division;
 };

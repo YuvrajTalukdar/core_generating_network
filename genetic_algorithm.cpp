@@ -124,6 +124,16 @@ void segment_class::chromosome_data_transfer(int crossover_index,bool before,chr
             destination.rhs_upper=source.rhs_upper;
             destination.rhs_lower=source.rhs_lower;
             break;
+            case 7:
+            destination.flatening_fx_enabled=source.flatening_fx_enabled;
+            destination.extreame_weight_remover=source.extreame_weight_remover;
+            destination.zero_weight_remover=source.zero_weight_remover;
+            destination.fp_change_value=source.fp_change_value;
+            destination.summation_temp_thershold=source.fp_change_value;
+            destination.rhs_upper=source.rhs_upper;
+            destination.rhs_lower=source.rhs_lower;
+            destination.attributes_per_core=source.attributes_per_core;
+            break;
         }
     }
     else
@@ -138,6 +148,7 @@ void segment_class::chromosome_data_transfer(int crossover_index,bool before,chr
             destination.rhs_upper=source.rhs_upper;
             destination.rhs_lower=source.rhs_lower;
             destination.attributes_per_core=source.attributes_per_core;
+            destination.data_division=source.data_division;
             break;
             case 1:
             destination.zero_weight_remover=source.zero_weight_remover;
@@ -146,6 +157,7 @@ void segment_class::chromosome_data_transfer(int crossover_index,bool before,chr
             destination.rhs_upper=source.rhs_upper;
             destination.rhs_lower=source.rhs_lower;
             destination.attributes_per_core=source.attributes_per_core;
+            destination.data_division=source.data_division;
             break;
             case 2:
             destination.fp_change_value=source.fp_change_value;
@@ -153,24 +165,32 @@ void segment_class::chromosome_data_transfer(int crossover_index,bool before,chr
             destination.rhs_upper=source.rhs_upper;
             destination.rhs_lower=source.rhs_lower;
             destination.attributes_per_core=source.attributes_per_core;
+            destination.data_division=source.data_division;
             break;
             case 3:
             destination.summation_temp_thershold=source.fp_change_value;
             destination.rhs_upper=source.rhs_upper;
             destination.rhs_lower=source.rhs_lower;
             destination.attributes_per_core=source.attributes_per_core;
+            destination.data_division=source.data_division;
             break;
             case 4:
             destination.rhs_upper=source.rhs_upper;
             destination.rhs_lower=source.rhs_lower;
             destination.attributes_per_core=source.attributes_per_core;
+            destination.data_division=source.data_division;
             break;
             case 5:
             destination.rhs_lower=source.rhs_lower;
             destination.attributes_per_core=source.attributes_per_core;
+            destination.data_division=source.data_division;
             break;
             case 6:
             destination.attributes_per_core=source.attributes_per_core;
+            destination.data_division=source.data_division;
+            break;
+            case 7:
+            destination.data_division=source.data_division;
             break;
         }
     }
@@ -183,7 +203,7 @@ vector<chromosome> segment_class::crossover(vector<chromosome>& population)
     {
         if(a!=population.size()-1)
         {
-            int crossover_index=get_random_number(0,6);//0 to crossover_index. If crossover_index = 6 than [0,1,2,3,4,5,6] && [7]
+            int crossover_index=get_random_number(0,7);//0 to crossover_index. If crossover_index = 7 than [0,1,2,3,4,5,6,7] && [8]
             chromosome new_chromosome1,new_chromosome2;
             //tranfer chromosome a data
             new_chromosome1.id=current_chromosome_id;
@@ -265,6 +285,7 @@ void segment_class::generate_initial_population()
         c1.rhs_upper=get_random_number(rhs_upper_min,rhs_upper_max);
         c1.rhs_lower=get_random_number(rhs_lower_min,rhs_lower_max);
         c1.attributes_per_core=get_random_number(attributes_per_core_min,attributes_per_core_max);
+        c1.data_division=get_random_number(data_div_min,data_div_max);
         population.push_back(c1);
     }
     current_chromosome_id=population_size;
@@ -274,9 +295,8 @@ void segment_class::calc_fitness_threaded(int no_of_threads,vector<chromosome>& 
 {
     for(int a=0;a<population.size();a++)
     {
-        save_chromosome(population[a]);
         try{
-            train(no_of_threads,1,population[a]);
+            train(no_of_threads,population[a]);
         }
         catch(exception &e)
         {
@@ -284,7 +304,6 @@ void segment_class::calc_fitness_threaded(int no_of_threads,vector<chromosome>& 
             save_chromosome(population[a]);
             int gh;cin>>gh;
         }
-        //cout<<"\na= "<<a<<" f= "<<population[a].fitness;
     }
     /*if(no_of_threads==1)
     {

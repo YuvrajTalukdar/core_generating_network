@@ -185,6 +185,8 @@ chromosome get_critical_variables_from_user(unsigned int &iterations,unsigned in
         cin>>critical_variables.rhs_lower;
         cout<<"attributes_per_core: ";
         cin>>critical_variables.attributes_per_core;
+        cout<<"data_division: ";
+        cin>>critical_variables.data_division;
         point3:
         cout<<"\nDo you confirm the critical variables?(y/n) ";
         cin>>option;
@@ -212,7 +214,7 @@ chromosome get_critical_variables_from_user(unsigned int &iterations,unsigned in
     return critical_variables;
 }
 
-void core_starter(string &file_name_local,int &test_train_predict,float &data_division,string &network_save_file_name,int &no_of_threads)
+void core_starter(string &file_name_local,int &test_train_predict,string &network_save_file_name,int &no_of_threads)
 {
     nn_core_data_package_class data_pack;
     file_name=file_name_local;
@@ -223,17 +225,14 @@ void core_starter(string &file_name_local,int &test_train_predict,float &data_di
     }
     
     segment_class segment1(0,0,"default_segment");
-    if(test_train_predict==0||test_train_predict==1||test_train_predict==4)
+    if(test_train_predict==1)
     {
-        //0: train entire dataset
-        //1: train and test dataset
-        //4: auto train mode
         unsigned int iterations,population_size,mutation_percentage;
         chromosome critical_variables=get_critical_variables_from_user(iterations,population_size,mutation_percentage);
         if(critical_variables.id!=-1)
         {   segment1.set_critical_variable(critical_variables);}
         segment1.set_ga_settings(iterations,population_size,mutation_percentage);
     }
-    segment1.add_data(&data_pack,test_train_predict,data_division,network_save_file_name);
+    segment1.add_data(&data_pack,test_train_predict,network_save_file_name);
     segment1.start_segment(no_of_threads);
 }

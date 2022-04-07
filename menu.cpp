@@ -16,7 +16,80 @@ void clrscr()
     //system("clear");
 }
 
-bool menu(string &file_name,int &test_train_predict,float &data_division,string &network_save_file_name,int &no_of_threads)
+string select_network_file(vector<string>& csv_save_file)
+{
+    cout<<"\n\nChoose the network save file:-\n";
+    char filename_sub_str2[]="network-";
+    vector<string> network_save_file;
+    network_save_file.clear();
+    for(int a=0;a<csv_save_file.size();a++)
+    {
+        if(strcasestr(csv_save_file[a].c_str(),filename_sub_str2))
+        {   network_save_file.push_back(csv_save_file[a]);}
+    }
+    for(int a=0;a<network_save_file.size();a++)
+    {   cout<<a+1<<". "<<network_save_file[a]<<endl;}
+    if(network_save_file.size()==0)
+    {   cout<<"\nERROR No network file found in the current directory!!!\n";}
+    cout<<"\npress 0 to go back\n";
+    point1:
+    cout<<"\nEnter your option: ";
+    int option2;
+    cin>>option2;
+    if(option2>network_save_file.size() || option2<0)
+    {
+        cout<<"Wrong option!!!";
+        goto point1;
+    }
+    else if(option2==0)
+    {   return "";}
+    else
+    {   return network_save_file[option2-1];}
+}
+
+string select_data_file(vector<string>& csv_save_file)
+{
+    cout<<"\n\nList of available csv files for input data in the current directory:-\n";
+    for(int a=0;a<csv_save_file.size();a++)
+    {   cout<<a+1<<". "<<csv_save_file[a]<<endl;}   
+    if(csv_save_file.size()==0)
+    {   cout<<"\nERROR No .csv file found in the current directory!!!\n";}
+    cout<<"\nPress 0 to go back"; 
+    int file_choice;
+    point2:
+    cout<<"\n\nSelect your option: ";
+    cin>>file_choice;
+    if(file_choice>csv_save_file.size() || file_choice<0)
+    {   
+        cout<<"wrong option!!!";
+        goto point2;
+    }
+    else if(file_choice==0)
+    {   
+        clrscr();
+        return "";
+    }
+    else
+    {   return csv_save_file[file_choice-1];}
+}
+
+int get_no_of_threads()
+{
+    int no_of_threads;
+    char thread_option;
+    point1:
+    cout<<"\nEnable multi threading(y/n): ";
+    cin>>thread_option;
+    if(thread_option=='y'||thread_option=='Y')
+    {   no_of_threads=thread::hardware_concurrency();}
+    else if(thread_option=='n'||thread_option=='N')
+    {   no_of_threads=1;}
+    else
+    {   cout<<"Wrong Option!!";goto point1;}
+    return no_of_threads;
+}
+
+bool menu(string &file_name,int &test_train_predict,string &network_save_file_name,int &no_of_threads)
 {
     //.csv file finder
     struct dirent *de;  // Pointer for directory entry
@@ -28,12 +101,14 @@ bool menu(string &file_name,int &test_train_predict,float &data_division,string 
         return false;
     }
     char filename_sub_str[]=".csv";
-    vector<string> csv_save_file;
+    vector<string> csv_save_file,network_save_files;
     csv_save_file.clear();
     while ((de = readdir(dr)) != NULL)
     {
-        if(strcasestr(de->d_name,filename_sub_str) && strcasestr(de->d_name,"network-")==NULL)//strcasestr returns only char*
+        if(strcasestr(de->d_name,filename_sub_str) && strcasestr(de->d_name,"network-")==NULL && strcasestr(de->d_name,"core-")==NULL)//strcasestr returns only char*
         {   csv_save_file.push_back(de->d_name);}
+        else if(strcasestr(de->d_name,filename_sub_str) && strcasestr(de->d_name,"network-") && strcasestr(de->d_name,"core-")==NULL)
+        {   network_save_files.push_back(de->d_name);}
     }
     closedir(dr);
     //home page
@@ -43,261 +118,92 @@ bool menu(string &file_name,int &test_train_predict,float &data_division,string 
     clrscr();
     string heading="CORE GENERATING NETWORK TEST INTERFACE\n";
     cout<<setw(w.ws_col/2+heading.length()/2)<<heading;
-    cout<<"\n\n1. Train network on the entire dataset\n"<<"2. Train and test the network\n"<<"3. Use a trained network to make predictions\n";
-    cout<<"4. Enter individual data and predict the results using a trained network\n5. Auto train the network\n";
+    cout<<"\n\n1. Train and test the network\n"<<"2. Use a trained network to make predictions\n";
+    cout<<"3. Enter individual data and predict the results using a trained network\n4. Test an already trained network.\n";
     cout<<"\nPress 0 to close\n\n";
     point1:
     cout<<"Select your option: ";
     int option1;
     cin>>option1;
-    if(option1>5 || option1<0)
+    if(option1>4 || option1<0)
     {
         cout<<"Wrong option!!!\n";
         goto point1;
     }
     else if(option1==1)
     {
-        //file selector for complete training
+        //file selector for part training and part testing
         clrscr();
-        heading="NON BACKPROPAGATION ALGORITHM TEST INTERFACE\n";
-        cout<<setw(w.ws_col/2+heading.length()/2)<<heading;      
-        string note="\n\nHere a new network will be created if no network file exist and trained on the entire dataset, \nelse if a network file is available than a new network file will be creeated which will have \nall the connections from the old network and also the new connections will be created this time, so \nif you want to test the accuracy of the network generated, it is scientifically not accurate to \ntest the network trained on the same dataset so better do the testing on another new dataset of \nsame nature. The accuracy may be increased in the process of multiple training.\nIF YOU WANT A BRAND NEW NETWORK THAN MAKE SURE THE CURRENT DIRECTORY DONT WAVE ANY NETWORK FILE.";
-        cout<<"\n\nNOTE:-"<<note;  
-        cout<<"\n\nList of available csv files for input data in the current directory:-\n";
-        for(int a=0;a<csv_save_file.size();a++)
-        {   cout<<a+1<<". "<<csv_save_file[a]<<endl;}   
-        if(csv_save_file.size()==0)
-        {   cout<<"\nERROR No .csv file found in the current directory!!!\n";}
-        cout<<"\nPress 0 to go back"; 
-        int file_choice;
-        point2:
-        cout<<"\n\nSelect your option: ";
-        cin>>file_choice;
-        if(file_choice>csv_save_file.size() || file_choice<0)
-        {   
-            cout<<"wrong option!!!";
-            goto point2;
-        }
-        else if(file_choice==0)
+        heading="CORE GENERATING NETWORK TEST INTERFACE\n";
+        cout<<setw(w.ws_col/2+heading.length()/2)<<heading;
+        string note1="\n\nHere a new network is created and trained and tested on the dataset you selected. At max 1/2 of the data can be used for training and rest will be used for testing. The training data may be less than 1/2 of the entire dataset, and rest will be for testing.";
+        cout<<"\n\nNOTE:-"<<note1;    
+        file_name=select_data_file(csv_save_file);
+        if(file_name.length()==0)
         {   
             clrscr();
             goto point0;
         }
-        else
-        {   file_name=csv_save_file[file_choice-1];}
-        //setting test_train_predict
-        test_train_predict=0;//creates a brand new trained network
-        char thread_option;
-        point9:
-        cout<<"\n\nEnable multi threading(y/n): ";
-        cin>>thread_option;
-        if(thread_option=='y'||thread_option=='Y')
-        {   no_of_threads=thread::hardware_concurrency();}
-        else if(thread_option=='n'||thread_option=='N')
-        {   no_of_threads=1;}
-        else
-        {   cout<<"Wrong Option!!";goto point9;}
+        clrscr();
+        heading="CORE GENERATING NETWOR TEST INTERFACE\n";
+        cout<<setw(w.ws_col/2+heading.length()/2)<<heading;
+        test_train_predict=1;
+    
+        no_of_threads=get_no_of_threads();
     }
     else if(option1==2)
     {
-        //file selector for part training and part testing
-        clrscr();
-        heading="NON BACKPROPAGATION ALGORITHM TEST INTERFACE\n";
-        cout<<setw(w.ws_col/2+heading.length()/2)<<heading;      
-        string note1;//="\n\nThis will create a new network trained with specific test : train ratio dataset.\nThe dataset will be divided into testing and training sets, and after training \nthe network on the training set its acuracy will be automatically tested \non the testing set.";
-        cout<<"\n\nNOTE:-"<<note1;  
-        cout<<"\n\nList of available csv files for input data in the current directory:-\n";
-        for(int a=0;a<csv_save_file.size();a++)
-        {   cout<<a+1<<". "<<csv_save_file[a]<<endl;}   
-        if(csv_save_file.size()==0)
-        {   cout<<"\nERROR No .csv file found in the current directory!!!\n";}
-        cout<<"\nPress 0 to go back"; 
-        int file_choice;
-        point3:
-        cout<<"\n\nSelect your option: ";
-        cin>>file_choice;
-        if(file_choice>csv_save_file.size() || file_choice<0)
-        {   
-            cout<<"wrong option!!!";
-            goto point3;
-        }
-        else if(file_choice==0)
-        {   
-            clrscr();
-            goto point0;
-        }
-        else
-        {   file_name=csv_save_file[file_choice-1];}
-        //data division selector
-        clrscr();
-        heading="NON BACKPROPAGATION ALGORITHM TEST INTERFACE\n";
-        cout<<setw(w.ws_col/2+heading.length()/2)<<heading;        
-        cout<<"\n\nEnter the test : train ratio :-\n\n";
-        cout<<"(test data size=total data / divisor,train data = total data - test data, \nin case of cancer dataset dont go beyond 21 and in case of space suttle dataset dont go beyond 1.5)\n\n";
-        cout<<"Enter data_division value: ";
-        cin>>data_division;
-        test_train_predict=1;
-        char thread_option;
-        point10:
-        cout<<"\nEnable multi threading(y/n): ";
-        cin>>thread_option;
-        if(thread_option=='y'||thread_option=='Y')
-        {   no_of_threads=thread::hardware_concurrency();}
-        else if(thread_option=='n'||thread_option=='N')
-        {   no_of_threads=1;}
-        else
-        {   cout<<"Wrong Option!!";goto point10;}
-    }
-    else if(option1==3)
-    {
-        point7:
-        clrscr();
-        heading="NON BACKPROPAGATION ALGORITHM TEST INTERFACE\n";
-        cout<<setw(w.ws_col/2+heading.length()/2)<<heading;  
-        string note2="\n\nThe prediction results are saved on a file named prediction_results.csv. ";
-        cout<<"\n\nNOTE:-"<<note2; 
-        cout<<"\n\nChoose the network save file:-\n";
-        //.network file finder
-        struct dirent *de2;  // Pointer for directory entry
-        // opendir() returns a pointer of DIR type. 
-        DIR *dr2 = opendir(".");
-        if (dr2 == NULL)  // opendir returns NULL if couldn't open directory
-        {
-            cout<<"Could not open current directory";
-            return false;
-        }
-        char filename_sub_str2[]="network-";
-        vector<string> network_save_file;
-        network_save_file.clear();
-        while ((de2 = readdir(dr2)) != NULL)
-        {
-            if(strcasestr(de2->d_name,filename_sub_str2))
-            {   network_save_file.push_back(de2->d_name);}
-        }
-        closedir(dr2);
-        for(int a=0;a<network_save_file.size();a++)
-        {   cout<<a+1<<". "<<network_save_file[a]<<endl;}
-        if(network_save_file.size()==0)
-        {   cout<<"\nERROR No network file found in the current directory!!!\n";}
-        cout<<"\npress 0 to go back\n";
         point4:
-        cout<<"\nEnter your option: ";
-        int option2;
-        cin>>option2;//fddfsffsfsdfdsf
-        if(option2>network_save_file.size() || option2<0)
-        {
-            cout<<"Wrong option!!!";
-            goto point4;
-        }
-        else if(option2==0)
-        {   goto point0;}
-        else
-        {   network_save_file_name=network_save_file[option2-1];}
-        //data_file_selector
-
         clrscr();
-        heading="NON BACKPROPAGATION ALGORITHM TEST INTERFACE\n";
-        cout<<setw(w.ws_col/2+heading.length()/2)<<heading;     
-        string note1="\n\nSelect the data file for the network you have selected before. If the selected datafile's data is \nnot of the type which was used to train the network in the network file the software may crash or \nstop. ";
-        cout<<"\n\nNOTE:-"<<note1;  
-        cout<<"\n\nList of available csv files for input data in the current directory:-\n";
-        for(int a=0;a<csv_save_file.size();a++)
-        {   cout<<a+1<<". "<<csv_save_file[a]<<endl;}   
-        if(csv_save_file.size()==0)
-        {   cout<<"\nERROR No .csv file found in the current directory!!!\n";}
-        cout<<"\nPress 0 to go back"; 
-        int file_choice;
-        point6:
-        cout<<"\n\nSelect your option: ";
-        cin>>file_choice;
-        if(file_choice>csv_save_file.size() || file_choice<0)
-        {   
-            cout<<"wrong option!!!";
-            goto point6;
-        }
-        else if(file_choice==0)
-        {   
-            clrscr();
-            goto point7;
-        }
-        else
-        {   file_name=csv_save_file[file_choice-1];}
+        heading="CORE GENERATING NETWORK TEST INTERFACE\n";
+        cout<<setw(w.ws_col/2+heading.length()/2)<<heading;  
+        string note2="\n\nThe prediction results will be saved in a file named prediction_results.csv. ";
+        cout<<"\n\nNOTE:-"<<note2; 
+        network_save_file_name=select_network_file(network_save_files);
+        if(network_save_file_name.length()==0)
+        {   goto point0;}
+        clrscr();
+        heading="CORE GENERATING NETWORK TEST INTERFACE\n";
+        cout<<setw(w.ws_col/2+heading.length()/2)<<heading;  
+        file_name=select_data_file(csv_save_file);
+        if(file_name.length()==0)
+        {   goto point4;}
 
         test_train_predict=2;
     }
-    else if(option1==4)
+    else if(option1==3)
     {
         clrscr();
-        heading="NON BACKPROPAGATION ALGORITHM TEST INTERFACE\n";
+        heading="CORE GENERATING NETWORK TEST INTERFACE\n";
         cout<<setw(w.ws_col/2+heading.length()/2)<<heading;  
         string note2="\n\nHere you can enter the data yourself and let the algorithm predict the appropriate result, \nthe result will appear instantaneously in this interface itself.";
         cout<<"\n\nNOTE:-"<<note2; 
-        cout<<"\n\nChoose the network save file:-\n";
         //.network file finder
-        struct dirent *de2;  // Pointer for directory entry
-        // opendir() returns a pointer of DIR type. 
-        DIR *dr2 = opendir(".");
-        if (dr2 == NULL)  // opendir returns NULL if couldn't open directory
-        {
-            cout<<"Could not open current directory";
-            return false;
-        }
-        char filename_sub_str2[]="network-";
-        vector<string> network_save_file;
-        network_save_file.clear();
-        while ((de2 = readdir(dr2)) != NULL)
-        {
-            if(strcasestr(de2->d_name,filename_sub_str2))
-            {   network_save_file.push_back(de2->d_name);}
-        }
-        closedir(dr2);
-        for(int a=0;a<network_save_file.size();a++)
-        {   cout<<a+1<<". "<<network_save_file[a]<<endl;}
-        cout<<"\npress 0 to go back\n";
-        point5:
-        cout<<"\nEnter your option: ";
-        int option2;
-        cin>>option2;
-        if(option2>network_save_file.size() || option2<0)
-        {
-            cout<<"Wrong option!!!";
-            goto point5;
-        }
-        else if(option2==0)
+        network_save_file_name=select_network_file(network_save_files);
+        if(network_save_file_name.length()==0)
         {   goto point0;}
-        else
-        {   network_save_file_name=network_save_file[option2-1];}
+        
         test_train_predict=3;//a new option 
     }
-    else if(option1==5)//auto train with table top finder
+    else if(option1==4)
     {
+        point2:
         clrscr();
-        heading="NON BACKPROPAGATION ALGORITHM AUTO TRAIN INTERFACE\n";
+        heading="CORE GENERATING NETWORK TEST INTERFACE\n";
         cout<<setw(w.ws_col/2+heading.length()/2)<<heading;      
-        string note="\n\nHere a new network will be created and trained till table top accuracy is not reached.";
-        cout<<"\n\nNOTE:-"<<note;  
-        cout<<"\n\nList of available csv files for input data in the current directory:-\n";
-        for(int a=0;a<csv_save_file.size();a++)
-        {   cout<<a+1<<". "<<csv_save_file[a]<<endl;}   
-        if(csv_save_file.size()==0)
-        {   cout<<"\nERROR No .csv file found in the current directory!!!\n";}
-        cout<<"\nPress 0 to go back"; 
-        int file_choice;
-        point8:
-        cout<<"\n\nSelect your option: ";
-        cin>>file_choice;
-        if(file_choice>csv_save_file.size() || file_choice<0)
-        {   
-            cout<<"wrong option!!!";
-            goto point8;
-        }
-        else if(file_choice==0)
-        {   
-            clrscr();
-            goto point0;
-        }
-        else
-        {   file_name=csv_save_file[file_choice-1];}
+        string note="\n\nHere an existing network will be used to test the accuracy that can be achieved by it.";
+        cout<<"\n\nNOTE:-"<<note;
+        //.network file finder
+        network_save_file_name=select_network_file(network_save_files);
+        if(network_save_file_name.length()==0)
+        {   goto point0;}
+        clrscr();
+        heading="CORE GENERATING NETWORK TEST INTERFACE\n";
+        cout<<setw(w.ws_col/2+heading.length()/2)<<heading;  
+        file_name=select_data_file(csv_save_file);
+        if(file_name.length()==0)
+        {   goto point2;}
+
         test_train_predict=4;
     }
     else if(option1==0)

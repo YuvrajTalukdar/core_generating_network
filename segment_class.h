@@ -18,6 +18,7 @@ class segment_class{
     static const int rhs_upper_min=2,rhs_upper_max=20;
     static const int rhs_lower_min=40,rhs_lower_max=150;
     static const int attributes_per_core_min=8,attributes_per_core_max=30;
+    float data_div_min=2,data_div_max;
     //algorithm critical data
     unsigned int population_size,ga_iterations,mutation_percentage;
     int no_of_genes_to_mutate;
@@ -90,15 +91,13 @@ class segment_class{
 
     void f_data_viewer(string str,vector<nn_core_filtered_data> f_data);
 
-    void filter(nn_core_data_package_class* data_pack,int train_test_predict);
+    void filter(nn_core_data_package_class* data_pack);
 
     bool ds_ns_have_same_labels(core_class* core);
 
-    vector<nn_core_filtered_data> f_train_data;//f_test_data; //memory_optimization1
-    nn_core_data_package_class test_data;
-
+    vector<nn_core_filtered_data> f_data_vector;
+    vector<nn_core_filtered_data> f_test_data_vector;
     vector<vector<nn_core_filtered_data>> f_train_data_split;
-    //vector<nn_core_data_package_class> test_data_split;
 
     void split_attributes_for_each_core();
 
@@ -106,9 +105,9 @@ class segment_class{
 
     void calculate_critical_variables(int no_of_threads);
 
-    void train(int no_of_threads,int train_test_predict,chromosome& current_critical_variable);    
+    void train(int no_of_threads,chromosome& current_critical_variable);    
 
-    void start_trainer(nn_core_data_package_class* data_pack,bool network_avail_status,int train_test_predict,int no_of_threads);//there cannot be a case of invalid network and data without labels.
+    void start_trainer(nn_core_data_package_class* data_pack,int no_of_threads);//there cannot be a case of invalid network and data without labels.
 
     void checker_df(vector<neuron> &output_neurons);
 
@@ -120,7 +119,6 @@ class segment_class{
 
     int propagate(vector<float> input);
 
-    void test();//parameters not required now
     //memory_optimization1
     float testing_for_each_label(/*,int train_test_predict*/);
     
@@ -163,7 +161,7 @@ class segment_class{
 
     void start_segment(int no_of_threads);//train_test_predict=1//train_test_predic is required for extra assurance
 
-    void add_data(nn_core_data_package_class* data_pack,int train_test_predict,float data_division1,string network_save_file_name);
+    void add_data(nn_core_data_package_class* data_pack,int train_test_predict,string network_save_file_name);
     
     string return_name()
     {   return segment_name;}
