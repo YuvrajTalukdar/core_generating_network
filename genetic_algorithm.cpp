@@ -352,6 +352,7 @@ chromosome segment_class::start_genetic_algorithm(int no_of_threads)
             //cout<<"\nfitness= "<<population[b].fitness;
             total_value+=population[b].fitness;
         }
+        save_chromosome(population[0]);
         cout<<"\nIteration: "<<a<<", total_population_fitness: "<<total_value<<", max_fitness: "<<population[0].fitness;
     }
     return population[0];
@@ -376,5 +377,6 @@ void segment_class::save_chromosome(chromosome& chromosome)
     file1<<"\nrhs_upper: "<<chromosome.rhs_upper;
     file1<<"\nrhs_lower: "<<chromosome.rhs_lower;
     file1<<"\nattributes_per_core: "<<chromosome.attributes_per_core;
+    file1<<"\nfitness: "<<chromosome.fitness;
     file1.close();
 }

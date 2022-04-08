@@ -607,15 +607,10 @@ void segment_class::start_trainer(nn_core_data_package_class* data_pack,int no_o
     data_pack->labels.clear();
     if(!critical_variables_set)
     {   calculate_critical_variables(no_of_threads);}
-    //training by threading can be done here in future
-    if(core_vector.size()==0)//this means core save file not found and fresh cores need to be created
-    {   
-        f_train_data_split.clear();
-        create_cores();
-    }
+    f_train_data_split.clear();
     f_test_data_vector.clear();
+    create_cores();
     split_attributes_for_each_core();
-    f_data_vector.clear();
     train(no_of_threads,critical_variable);
     save_segment();
     message.clear();

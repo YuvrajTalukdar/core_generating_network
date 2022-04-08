@@ -173,8 +173,8 @@ chromosome get_critical_variables_from_user(unsigned int &iterations,unsigned in
         critical_variables.id=0;
         point2:
         critical_variables.flatening_fx_enabled=get_true_false("\nflatening_fx_enabled (y/n): ");
-        critical_variables.extreame_weight_remover=get_true_false("extreame_weight_remover (y/n): ");
         critical_variables.zero_weight_remover=get_true_false("zero_weight_remover (y/n): ");
+        critical_variables.extreame_weight_remover=get_true_false("extreame_weight_remover (y/n): ");
         cout<<"fp_change_value: ";
         cin>>critical_variables.fp_change_value;
         cout<<"summation_temp_threshold: ";
