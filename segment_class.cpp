@@ -29,8 +29,9 @@ void segment_class::predict_progress_bar()//need analyzing
     }
 }
 
-bool segment_class::load_segment_if_available(int segment_aim,int segment_no,bool file_name_received,string file_name)//under construction
+bool segment_class::load_segment_if_available(string file_name)//under construction
 {
+    f_test_data_vector=f_data_vector;
     return false;
 }
 
@@ -260,29 +261,27 @@ float segment_class::testing_for_each_label()//finds the accuracy of each label
     return avg_accuracy;
 }
 
-void segment_class::print_prediction(nn_core_data_package_class* data_pack,int train_test_predict)//prints the data and predicted label to a file. Also displays the accuracy.
+void segment_class::print_prediction(nn_core_data_package_class& data_pack,int train_test_predict)//prints the data and predicted label to a file. Also displays the accuracy.
 {
-    datapack_analyzer(data_pack);
     ofstream file1("prediction_result.csv",ios::out);
 
     file1<<"data,label,\n";
     float label;
-    shared_block_data_obj.predict_progress_bar_denominator=data_pack->data.size();
+    shared_block_data_obj.predict_progress_bar_denominator=data_pack.data.size();
         
     thread* predict_progress_bar_thread;
     if(pds==true)
     {   predict_progress_bar_thread=new thread(&segment_class::predict_progress_bar,this);}
     
     int fired_neuron_index,correct=0;
-    bool has_valid_labels=check_if_datapack_has_valid_labels(data_pack);
-    for(int a=0;a<data_pack->data.size();a++)
+    for(int a=0;a<data_pack.data.size();a++)
     {
-        for(int b=0;b<data_pack->data[a].size();b++)
-        {   file1<<data_pack->data[a][b]<<",";}
-        fired_neuron_index=propagate(data_pack->data[a]);
+        for(int b=0;b<data_pack.data[a].size();b++)
+        {   file1<<data_pack.data[a][b]<<",";}
+        fired_neuron_index=propagate(data_pack.data[a]);
         label=ds.elements[fired_neuron_index];
         file1<<":"<<label<<",\n";
-        if(has_valid_labels && fired_neuron_index==index_of_neuron_to_be_fired(data_pack->labels[a],ds.elements))
+        if(fired_neuron_index==index_of_neuron_to_be_fired(data_pack.labels[a],ds.elements))
         {   correct++;}
         shared_block_data_obj.predict_progress_bar_numerator++;
     }
@@ -292,11 +291,8 @@ void segment_class::print_prediction(nn_core_data_package_class* data_pack,int t
     file1.close();
     message="\nPrediction complete, check the file prediction_result.csv\n";
     print_message();
-    if(has_valid_labels)
-    {
-        message="\n\nAccuracy= "+to_string((((float)correct)/((float)data_pack->data.size()))*100)+"%"+" correct= "+to_string(correct)+" total= "+to_string(data_pack->data.size());
-        print_message();
-    }
+    message="\n\nAccuracy= "+to_string((((float)correct)/((float)data_pack.data.size()))*100)+"%"+" correct= "+to_string(correct)+" total= "+to_string(data_pack.data.size());
+    print_message();
 }
 
 void segment_class::split_attributes_for_each_core()//ok tested
@@ -375,7 +371,7 @@ void segment_class::create_cores()
         ds1.lower_firing_constrain_rhs=ds.lower_firing_constrain_rhs;
         ds1.upper_not_firing_constrain_rhs=ds.upper_not_firing_constrain_rhs;
         core_class* core=new core_class(a,a,segment_aim,segment_no,"core_"+to_string(a),ds1);
-        core->set_critical_variable(critical_variable);
+        core->set_critical_variable(*critical_variable);
         core_vector.push_back(core);
     }
     f_train_data_split.resize(no_of_cores_required);
@@ -417,120 +413,19 @@ bool segment_class::ds_ns_have_same_labels(core_class* core)
     {   return false;}//means current ds is different from previous ds which was used to train the network
 }
 
-void segment_class::shuffler(nn_core_filtered_data* f_data)
+void segment_class::clear()
 {
-    vector<shuffling_data> shuffling_data_temp_vector;
-    shuffling_data shuffling_data_temp;
-    shuffling_data_temp_vector.clear();
-    //pushing the data the the shuffling vector
-    for(int a=0;a<f_data->data.size();a++)
-    {
-        shuffling_data_temp.temp_data=f_data->data[a];
-        shuffling_data_temp.temp_label=f_data->label;
-        shuffling_data_temp_vector.push_back(shuffling_data_temp);
-    }
-    //shuffeling the data
-    random_shuffle(shuffling_data_temp_vector.begin(),shuffling_data_temp_vector.end());
-    //pushing the data in the f_data
-    f_data->data.clear();
-    for(int a=0;a<shuffling_data_temp_vector.size();a++)
-    {
-        f_data->data.push_back(shuffling_data_temp_vector[a].temp_data);
-        f_data->label=shuffling_data_temp_vector[a].temp_label;
-    }
-}
-
-void segment_class::filter(nn_core_data_package_class* data_pack)
-{
-    nn_core_filtered_data f_data;
-    f_data_vector.clear();
-    for(int a=0;a<ds.elements.size();a++)
-    {
-        f_data.data.clear();
-        for(int b=0;b<data_pack->labels.size();b++)
-        {
-            if(ds.elements[a]==data_pack->labels[b])
-            {
-                f_data.data.push_back(data_pack->data[b]);
-                f_data.label=data_pack->labels[b];
-            }
-        }
-        f_data_vector.push_back(f_data);
-    }
-    //calling the shuffler
-    for(int a=0;a<f_data_vector.size();a++)
-    {
-        shuffler(&f_data_vector[a]);//has same size as that is of no of element
-    }
-    int least_data=f_data_vector[0].data.size();
-    for(int a=1;a<f_data_vector.size();a++)
-    {
-        if(least_data>f_data_vector[a].data.size())
-        {   least_data=f_data_vector[a].data.size();}
-    }
-    if(least_data/6<6)
-    {   data_div_max=data_div_min;}
-    else
-    {   data_div_max=6;}
-}
-
-void segment_class::datapack_analyzer(nn_core_data_package_class* data_pack)
-{
-    if(data_pack->analyze_status==false)
-    {
-        ds.no_of_elements_in_each_record=data_pack->data[0].size();
-        vector<int> labels;
-        bool found=false;
-        for(int a=0;a<data_pack->data.size();a++)
-        {
-            found=false;
-            for(int b=0;b<labels.size();b++)
-            {
-                if(labels[b]==data_pack->labels[a])
-                {
-                    found=true;
-                    break;
-                }
-            }
-            if(found==false)
-            {
-                labels.push_back(data_pack->labels[a]);
-            }
-        }
-        ds.no_of_labels=labels.size();
-        for(int a=0;a<labels.size();a++)
-        {
-            ds.elements.push_back(labels[a]);
-        }
-        data_pack->analyze_status=true;
-    }
-}
-
-void segment_class::calculate_critical_variables(int no_of_threads)
-{
-    chromosome critical_variable1=start_genetic_algorithm(no_of_threads);
-    critical_variables_set=true;
-    set_critical_variable(critical_variable1);
     for(int a=0;a<core_vector.size();a++)
     {   delete core_vector[a];}
     core_vector.clear();
     f_train_data_split.clear();
-    cout<<"\nflatening_fx_enabled: "<<critical_variable1.flatening_fx_enabled;
-    cout<<"\nzero_weight_remover: "<<critical_variable1.zero_weight_remover;
-    cout<<"\nextreame_weight_remover: "<<critical_variable1.extreame_weight_remover;
-    cout<<"\nfp_change_value: "<<critical_variable1.fp_change_value;
-    cout<<"\nsummation_temp_threshold: "<<critical_variable1.summation_temp_thershold;
-    cout<<"\nrhs_upper: "<<critical_variable1.rhs_upper;
-    cout<<"\nrhs_lower: "<<critical_variable1.rhs_lower;
-    cout<<"\nattributes_per_core: "<<critical_variable1.attributes_per_core;
-    cout<<"\ndata_division: "<<critical_variable1.data_division;
 }
 
-void segment_class::train(int no_of_threads,chromosome& current_critical_variable)
+void segment_class::train()
 {
     if(!critical_variables_set)
     {
-        set_critical_variable(current_critical_variable);
+        set_critical_variable(critical_variable);
         critical_variables_set=false;
         f_train_data_split.clear();
         f_test_data_vector.clear();
@@ -588,47 +483,25 @@ void segment_class::train(int no_of_threads,chromosome& current_critical_variabl
         {
             for(int a=0;a<core_vector.size();a++)
             {   core_vector[a]->save_core();}
-            save_chromosome(critical_variable);
         }
     }
-    current_critical_variable.fitness=testing_for_each_label();
+    critical_variable->fitness=testing_for_each_label();
     for(int a=0;a<core_vector.size();a++)
     {   delete core_vector[a];}
     core_vector.clear();
 }
 
-void segment_class::start_trainer(nn_core_data_package_class* data_pack,int no_of_threads)
+void segment_class::start_trainer()
 {
-    auto start = high_resolution_clock::now();
-    datapack_analyzer(data_pack);//function checked!
-    //filtering data according to labels
-    filter(data_pack);//f_train_data pack gets created here.
-    data_pack->data.clear();
-    data_pack->labels.clear();
-    if(!critical_variables_set)
-    {   calculate_critical_variables(no_of_threads);}
     f_train_data_split.clear();
     f_test_data_vector.clear();
     create_cores();
     split_attributes_for_each_core();
-    train(no_of_threads,critical_variable);
+    train();
     save_segment();
     message.clear();
     message="\nnetwork saved";
     print_message();
-    auto end = high_resolution_clock::now();
-    auto duration = duration_cast<microseconds>(end - start);
-    message.clear();
-    message="\n\nTime Taken= "+to_string(duration.count()/pow(10,6))+"\n\n";
-    print_message();
-}
-
-bool segment_class::check_if_datapack_has_valid_labels(nn_core_data_package_class* data_pack)
-{
-    if(data_pack->data.size()>data_pack->labels.size())
-    {   return false;}
-    else
-    {   return true;}
 }
 
 void segment_class::print_message()
@@ -639,104 +512,21 @@ void segment_class::print_message()
     pthread_mutex_unlock(&lock_1);
 }
 
-void segment_class::start_segment(int no_of_threads)
+void segment_class::add_f_data(vector<nn_core_filtered_data>& f_data_vec)
 {
-    message.clear();
-    message="\nsegment_no= "+to_string(segment_no)+" segment_name="+segment_name+" datapack_size= "+to_string((int)data_pack->data.size())+" started...";
-    print_message();
-    if(train_test_predict==1)//train and test
-    {
-        if(check_if_datapack_has_valid_labels(data_pack))
-        {   start_trainer(data_pack,no_of_threads);}
-        else
-        {
-            message.clear();
-            message="ERROR!!! Data Pack do not have valid labels.";
-            print_message();
-        }
-    }
-    else if(train_test_predict==2)//print predictions using already trained network
-    {
-        if(load_segment_if_available(0,0,true,network_save_file_name)==true)
-        {   
-            print_prediction(data_pack,train_test_predict);
-        }
-        else
-        {   
-            message.clear();
-            message="ERROR!!! failed to load network from the network file.";
-            print_message();
-        }
-    }
-    else if(train_test_predict==3)//making prediction on user entered individual data.
-    {
-        bool network_load_status=load_segment_if_available(0,0,true,network_save_file_name);
-        if(network_load_status==true)
-        {   
-            message.clear();
-            message="Network successfully loaded";
-            print_message();
-            make_prediction_on_user_entered_data();
-        }
-        else
-        {   
-            message.clear();
-            message="ERROR!!! failed to load network from the network file.";
-            print_message();
-        }
-    }
-    else if(train_test_predict==4)//test an already trained network
-    {
-        bool network_load_status=load_segment_if_available(0,0,true,network_save_file_name);
-        if(check_if_datapack_has_valid_labels(data_pack))
-        {
-            if(network_load_status)
-            {
-                filter(data_pack);
-                f_test_data_vector=f_data_vector;
-                testing_for_each_label();
-            }
-            else
-            {
-                message.clear();
-                message="ERROR!!! failed to load network from the network file.";
-                print_message();
-            }
-        }
-        else
-        {
-            message.clear();
-            message="ERROR!!! failed to load network from the network file.";
-            print_message();
-        }
-    }
+    f_data_vector=f_data_vec;
 }
 
-void segment_class::add_data(nn_core_data_package_class* data_pack1,int train_test_predict1,string network_save_file_name1)
-{
-    data_pack=data_pack1;
-    train_test_predict=train_test_predict1;
-    network_save_file_name=network_save_file_name1;
-    cout<<"\ndata_pack= "<<data_pack->data.size()<<" train_test_predict="<<train_test_predict<<" data_division="<<data_division<<" save_file_name="<<network_save_file_name;
-}
-
-void segment_class::set_critical_variable(chromosome critical_variable1)
+void segment_class::set_critical_variable(chromosome* critical_variable1)
 {
    critical_variables_set=true;
-   no_of_attributes_per_core_default=critical_variable1.attributes_per_core;
-   ds.lower_firing_constrain_rhs=critical_variable1.rhs_lower;
-   ds.upper_not_firing_constrain_rhs=critical_variable1.rhs_upper;
-   data_division=critical_variable1.data_division;
+   no_of_attributes_per_core_default=critical_variable1->attributes_per_core;
+   ds.lower_firing_constrain_rhs=critical_variable1->rhs_lower;
+   ds.upper_not_firing_constrain_rhs=critical_variable1->rhs_upper;
+   data_division=critical_variable1->data_division;
    critical_variable=critical_variable1;
    //for(int a=0;a<core_vector.size();a++)
    //{    core_vector[a]->set_critical_variable(critical_variable1);}
-}
-
-void segment_class::set_ga_settings(unsigned int &iterations,unsigned int &pop_size,unsigned int &mutation_percentage1)
-{
-    ga_iterations=iterations;
-    population_size=pop_size;
-    mutation_percentage=mutation_percentage1;
 }
 
 segment_class::segment_class(int segment_aim1,int segment_no1,string segment_name1)

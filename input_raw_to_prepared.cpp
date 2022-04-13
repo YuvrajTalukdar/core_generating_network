@@ -15,6 +15,7 @@ file modified of compability with shuttle_converted.csv
 using namespace std;
 
 string file_name;
+unsigned int iterations,population_size,mutation_percentage;
 
 struct raw_data{
     vector<vector<float>> rawData;
@@ -214,25 +215,192 @@ chromosome get_critical_variables_from_user(unsigned int &iterations,unsigned in
     return critical_variables;
 }
 
-void core_starter(string &file_name_local,int &test_train_predict,string &network_save_file_name,int &no_of_threads)
+datapack_structure_defination datapack_analyzer(nn_core_data_package_class* data_pack)
+{
+    datapack_structure_defination ds;    
+    ds.no_of_elements_in_each_record=data_pack->data[0].size();
+    vector<int> labels;
+    bool found=false;
+    for(int a=0;a<data_pack->data.size();a++)
+    {
+        found=false;
+        for(int b=0;b<labels.size();b++)
+        {
+            if(labels[b]==data_pack->labels[a])
+            {
+                found=true;
+                break;
+            }
+        }
+        if(found==false)
+        {
+            labels.push_back(data_pack->labels[a]);
+        }
+    }
+    ds.no_of_labels=labels.size();
+    for(int a=0;a<labels.size();a++)
+    {   ds.elements.push_back(labels[a]);}
+    data_pack->analyze_status=true;
+
+    return ds;
+}
+
+struct shuffling_data{
+    vector<float> temp_data;
+    int temp_label;
+};
+void shuffler(nn_core_filtered_data* f_data)
+{
+    vector<shuffling_data> shuffling_data_temp_vector;
+    shuffling_data shuffling_data_temp;
+    shuffling_data_temp_vector.clear();
+    //pushing the data the the shuffling vector
+    for(int a=0;a<f_data->data.size();a++)
+    {
+        shuffling_data_temp.temp_data=f_data->data[a];
+        shuffling_data_temp.temp_label=f_data->label;
+        shuffling_data_temp_vector.push_back(shuffling_data_temp);
+    }
+    //shuffeling the data
+    random_shuffle(shuffling_data_temp_vector.begin(),shuffling_data_temp_vector.end());
+    //pushing the data in the f_data
+    f_data->data.clear();
+    for(int a=0;a<shuffling_data_temp_vector.size();a++)
+    {
+        f_data->data.push_back(shuffling_data_temp_vector[a].temp_data);
+        f_data->label=shuffling_data_temp_vector[a].temp_label;
+    }
+}
+
+int filter(nn_core_data_package_class& data_pack,datapack_structure_defination ds,vector<nn_core_filtered_data>& f_data_vector)
+{
+    nn_core_filtered_data f_data;
+    f_data_vector.clear();
+    for(int a=0;a<ds.elements.size();a++)
+    {
+        f_data.data.clear();
+        for(int b=0;b<data_pack.labels.size();b++)
+        {
+            if(ds.elements[a]==data_pack.labels[b])
+            {
+                f_data.data.push_back(data_pack.data[b]);
+                f_data.label=data_pack.labels[b];
+            }
+        }
+        f_data_vector.push_back(f_data);
+    }
+    //calling the shuffler
+    for(int a=0;a<f_data_vector.size();a++)
+    {
+        shuffler(&f_data_vector[a]);//has same size as that is of no of element
+    }
+    int least_data=f_data_vector[0].data.size();
+    for(int a=1;a<f_data_vector.size();a++)
+    {
+        if(least_data>f_data_vector[a].data.size())
+        {   least_data=f_data_vector[a].data.size();}
+    }
+    if(least_data/6<6)
+    {   return 2;}
+    else
+    {   return 6;}
+}
+
+void start_segment(
+    int no_of_threads,
+    int train_test_predict,
+    nn_core_data_package_class& data_pack,
+    string network_save_file_name,
+    chromosome critical_variables)
+{
+    if(train_test_predict==2)//print predictions using already trained network
+    {
+        segment_class segment1(0,0,"default_segment");
+        if(segment1.load_segment_if_available(network_save_file_name)==true)
+        {   
+            if(data_pack.data[0].size()==segment1.return_ds().no_of_elements_in_each_record)
+            {   segment1.print_prediction(data_pack,train_test_predict);}
+            else
+            {   cout<<"\nERROR!!! Data Pack do not belongs to the loaded network.";}
+        }
+        else
+        {   cout<<"\nERROR!!! failed to load network from the network file.";}
+    }
+    else if(train_test_predict==3)//making prediction on user entered individual data.
+    {
+        segment_class segment1(0,0,"default_segment");
+        bool network_load_status=segment1.load_segment_if_available(network_save_file_name);
+        if(network_load_status==true)
+        {   
+            cout<<"\nNetwork successfully loaded";
+            segment1.make_prediction_on_user_entered_data();
+        }
+        else
+        {   cout<<"\nERROR!!! failed to load network from the network file.";}
+    }
+    else if(train_test_predict==4 || train_test_predict==1)//test an already trained network
+    {
+        segment_class segment1(0,0,"default_segment");
+        vector<nn_core_filtered_data> f_data_vector;
+        datapack_structure_defination ds=datapack_analyzer(&data_pack);
+        int data_div_max=filter(data_pack,ds,f_data_vector);
+        data_pack.data.clear();
+        data_pack.labels.clear();
+        segment1.set_ds(ds);
+        segment1.add_f_data(f_data_vector);
+        if(train_test_predict==1)
+        {
+            auto start = high_resolution_clock::now();
+            if(critical_variables.id==-1)
+            {
+                genetic_algorithm ga(iterations,population_size,mutation_percentage,data_div_max);
+                ga.ds=ds;
+                ga.f_data_vector=&f_data_vector;
+                critical_variables=ga.start_genetic_algorithm(no_of_threads);
+            }
+            segment1.set_critical_variable(&critical_variables);
+            cout<<"\nflatening_fx_enabled: "<<critical_variables.flatening_fx_enabled;
+            cout<<"\nzero_weight_remover: "<<critical_variables.zero_weight_remover;
+            cout<<"\nextreame_weight_remover: "<<critical_variables.extreame_weight_remover;
+            cout<<"\nfp_change_value: "<<critical_variables.fp_change_value;
+            cout<<"\nsummation_temp_threshold: "<<critical_variables.summation_temp_thershold;
+            cout<<"\nrhs_upper: "<<critical_variables.rhs_upper;
+            cout<<"\nrhs_lower: "<<critical_variables.rhs_lower;
+            cout<<"\nattributes_per_core: "<<critical_variables.attributes_per_core;
+            cout<<"\ndata_division: "<<critical_variables.data_division;
+            segment1.no_of_threads=no_of_threads;
+            segment1.start_trainer();
+            segment1.clear();
+            auto end = high_resolution_clock::now();
+            auto duration = duration_cast<microseconds>(end - start);
+            cout<<"\n\nTime Taken= "+to_string(duration.count()/pow(10,6))+"\n\n";
+        }
+        else if(train_test_predict==4)
+        {
+            bool network_load_status=segment1.load_segment_if_available(network_save_file_name);
+            if(network_load_status)
+            {   segment1.testing_for_each_label();}
+            else
+            {   cout<<"\nERROR!!! failed to load network from the network file.";}
+        }   
+    }
+}
+
+void core_starter(string &file_name_local,int &test_train_predict,string &segment_save_file_name,int &no_of_threads)
 {
     nn_core_data_package_class data_pack;
     file_name=file_name_local;
-    if(test_train_predict==0 || test_train_predict==1 || test_train_predict==2 || test_train_predict==4)
+    if(test_train_predict==1 || test_train_predict==2 || test_train_predict==4)
     {   
         prepare_data(&data_pack);
         cout<<"\ndata file reading success!!!\n";
     }
-    
-    segment_class segment1(0,0,"default_segment");
-    if(test_train_predict==1)
+    if(test_train_predict==2)
     {
-        unsigned int iterations,population_size,mutation_percentage;
-        chromosome critical_variables=get_critical_variables_from_user(iterations,population_size,mutation_percentage);
-        if(critical_variables.id!=-1)
-        {   segment1.set_critical_variable(critical_variables);}
-        segment1.set_ga_settings(iterations,population_size,mutation_percentage);
+        //preprocess the data_pack to move the labels to dataset
     }
-    segment1.add_data(&data_pack,test_train_predict,network_save_file_name);
-    segment1.start_segment(no_of_threads);
+    chromosome critical_variables;
+    if(test_train_predict==1)
+    {   critical_variables=get_critical_variables_from_user(iterations,population_size,mutation_percentage);}
+    start_segment(no_of_threads,test_train_predict,data_pack,file_name,critical_variables);
 }

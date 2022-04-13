@@ -1,6 +1,6 @@
 #include"segment_class.h"
 
-int segment_class::get_random_number(int min,int max)
+int genetic_algorithm::get_random_number(int min,int max)
 {
     random_device dev;
     mt19937 rng(dev());
@@ -8,7 +8,7 @@ int segment_class::get_random_number(int min,int max)
     return dist6(rng);
 }
 
-bool segment_class::get_random_bool()
+bool genetic_algorithm::get_random_bool()
 {
     int num=get_random_number(0,1);
     if(num==0)
@@ -17,7 +17,7 @@ bool segment_class::get_random_bool()
     {   return true;}
 }
 
-bool segment_class::comparator(chromosome c1,chromosome c2)
+bool genetic_algorithm::comparator(chromosome c1,chromosome c2)
 {
     if(c1.fitness>c2.fitness)
     {   return true;}
@@ -25,7 +25,7 @@ bool segment_class::comparator(chromosome c1,chromosome c2)
     {   return false;}
 }
 
-void segment_class::mutation(vector<chromosome>& population)
+void genetic_algorithm::mutation(vector<chromosome>& population)
 {
     vector<int> index_temp;
     bool found;
@@ -76,7 +76,7 @@ void segment_class::mutation(vector<chromosome>& population)
     }
 }
 
-void segment_class::chromosome_data_transfer(int crossover_index,bool before,chromosome& source,chromosome& destination)
+void genetic_algorithm::chromosome_data_transfer(int crossover_index,bool before,chromosome& source,chromosome& destination)
 {
     if(before)
     {
@@ -196,7 +196,7 @@ void segment_class::chromosome_data_transfer(int crossover_index,bool before,chr
     }
 }
 
-vector<chromosome> segment_class::crossover(vector<chromosome>& population)
+vector<chromosome> genetic_algorithm::crossover(vector<chromosome>& population)
 {
     vector<chromosome> new_gen;
     for(int a=0;a<population.size();a+=2)
@@ -224,7 +224,7 @@ vector<chromosome> segment_class::crossover(vector<chromosome>& population)
     return new_gen;
 }
 
-vector<chromosome> segment_class::tournament_selection(vector<chromosome> population)
+vector<chromosome> genetic_algorithm::tournament_selection(vector<chromosome> population)
 {
     vector<chromosome> selected_population;
     while(population.size()!=0)
@@ -271,7 +271,7 @@ vector<chromosome> segment_class::tournament_selection(vector<chromosome> popula
     return selected_population;
 }
 
-void segment_class::generate_initial_population()
+void genetic_algorithm::generate_initial_population()
 {
     for(int a=0;a<population_size;a++)
     {
@@ -291,31 +291,63 @@ void segment_class::generate_initial_population()
     current_chromosome_id=population_size;
 }
 
-void segment_class::calc_fitness_threaded(int no_of_threads,vector<chromosome>& population)
+void genetic_algorithm::calc_fitness_threaded(int no_of_threads,vector<chromosome>& population)
 {
-    for(int a=0;a<population.size();a++)
+    if(no_of_threads==1)
     {
-        try{
-            train(no_of_threads,population[a]);
-        }
-        catch(exception &e)
+        for(int a=0;a<population.size();a++)
         {
-            cout<<"\nCrashed!!";
-            save_chromosome(population[a]);
-            int gh;cin>>gh;
-        }
-    }
-    /*if(no_of_threads==1)
-    {
-        
+            try{
+                segment_class segment1(0,0,"default_segment");
+                segment1.set_ds(ds);
+                segment1.add_f_data(*f_data_vector);
+                segment1.critical_variable=&population[a];
+                segment1.no_of_threads=no_of_threads;
+                segment1.train();
+                segment1.clear();
+            }
+            catch(exception &e)
+            {
+                cout<<"\nCrashed!!";
+                save_chromosome(population[a]);
+                int gh;cin>>gh;
+            }
+        }       
     }
     else
-    {
-        
-    }*/
+    {   
+        no_of_threads+=2;
+        for(int a=0;a<population.size();a+=no_of_threads)
+        {
+            vector<thread> thread_vec(no_of_threads);
+            vector<segment_class> segment_vec;
+            for(int b=0;b<no_of_threads;b++)
+            {
+                if(a+b>=population.size())
+                {   break;}
+                segment_class segment1(0,a+b,"default_segment");
+                segment1.set_ds(ds);
+                segment1.add_f_data(*f_data_vector);
+                segment1.critical_variable=&population[a+b];
+                segment1.no_of_threads=no_of_threads;
+                thread_vec[b]=thread(&segment_class::train,segment1);
+                segment_vec.push_back(segment1);
+            }
+            for(int b=0;b<no_of_threads;b++)
+            {   
+                if(a+b>=population.size())
+                {   break;}
+                thread_vec[b].join();
+                segment_vec[b].clear();
+            }
+            segment_vec.clear();
+            thread_vec.clear();
+        }
+        no_of_threads-=2;
+    }
 }
 
-chromosome segment_class::start_genetic_algorithm(int no_of_threads)
+chromosome genetic_algorithm::start_genetic_algorithm(int no_of_threads)
 {
     no_of_genes_to_mutate=8*mutation_percentage/100;
     if(no_of_genes_to_mutate==0)
@@ -358,7 +390,7 @@ chromosome segment_class::start_genetic_algorithm(int no_of_threads)
     return population[0];
 }
 
-void segment_class::print_population(vector<chromosome>& population)
+void genetic_algorithm::print_population(vector<chromosome>& population)
 {
     for(int a=0;a<population.size();a++)
     {
@@ -366,7 +398,7 @@ void segment_class::print_population(vector<chromosome>& population)
     }
 }
 
-void segment_class::save_chromosome(chromosome& chromosome)
+void genetic_algorithm::save_chromosome(chromosome& chromosome)
 {
     ofstream file1("critical_var.txt",ios::app);
     file1<<"\nflatening_fx_enabled: "<<chromosome.flatening_fx_enabled;
@@ -379,4 +411,12 @@ void segment_class::save_chromosome(chromosome& chromosome)
     file1<<"\nattributes_per_core: "<<chromosome.attributes_per_core;
     file1<<"\nfitness: "<<chromosome.fitness;
     file1.close();
+}
+
+genetic_algorithm::genetic_algorithm(unsigned int &iterations,unsigned int &pop_size,unsigned int &mutation_percentage1,int &data_div_max1)
+{
+    ga_iterations=iterations;
+    population_size=pop_size;
+    mutation_percentage=mutation_percentage1;
+    data_div_max=data_div_max1;
 }

@@ -9,8 +9,8 @@ core class handles natural cores
 using namespace std;
 using namespace std::chrono;
 
-class segment_class{
-    private:
+class genetic_algorithm
+{
     /*GENETIC ALGORITHM COMPONENTS START*/
     //gene range
     static const int fp_change_value_min=30,fp_change_value_max=60;
@@ -39,22 +39,25 @@ class segment_class{
     vector<chromosome> tournament_selection(vector<chromosome> population);
     void generate_initial_population();
     void calc_fitness_threaded(int no_of_threads,vector<chromosome>& population);
+    public:
+    datapack_structure_defination ds;
+    vector<nn_core_filtered_data>* f_data_vector;
+
     chromosome start_genetic_algorithm(int no_of_threads);
+    genetic_algorithm(unsigned int &iterations,unsigned int &population_size,unsigned int &mutation_percentage,int &data_div_max);
     /*GENETIC ALGORITHM COMPONENTS END*/
-    
-    
+};
+
+class segment_class{
+    private:
     vector<core_class*> core_vector;
     vector<string> core_save_file_name_vector;
-
-    nn_core_data_package_class* data_pack;
     
     //network information
     float data_division=1.5;
     datapack_structure_defination ds;
-    int train_test_predict;
     string network_save_file_name;
     bool id_lock=false;
-    int required_no_of_threads;
     int no_of_attributes_per_core_default=25;//25
     int min_no_of_attributes_per_core=4;
     int extra_attributes_in_last_core=0;
@@ -71,23 +74,8 @@ class segment_class{
 
     //genetic algorithm variables
     bool critical_variables_set=false;
-    chromosome critical_variable;
 
     void save_segment();
-
-    bool check_if_datapack_has_valid_labels(nn_core_data_package_class* data_pack);//if a label is 0 than it is invalid
-
-    bool load_segment_if_available(int segment_aim,int segment_no,bool file_name_received,string file_name);
-
-    //void set_lower_firing_constrain_rhs();
-
-    void datapack_analyzer(nn_core_data_package_class* data_pack);//it fills up the datapack_structure_defination ds after analyzing the datapack. 
-    struct shuffling_data{
-        vector<float> temp_data;
-        int temp_label;
-    };
-
-    void shuffler(nn_core_filtered_data* f_data);
 
     void f_data_viewer(string str,vector<nn_core_filtered_data> f_data);
 
@@ -103,12 +91,6 @@ class segment_class{
 
     void create_cores();
 
-    void calculate_critical_variables(int no_of_threads);
-
-    void train(int no_of_threads,chromosome& current_critical_variable);    
-
-    void start_trainer(nn_core_data_package_class* data_pack,int no_of_threads);//there cannot be a case of invalid network and data without labels.
-
     void checker_df(vector<neuron> &output_neurons);
 
     void checker_nf(vector<neuron> &output_neurons);
@@ -119,14 +101,7 @@ class segment_class{
 
     int propagate(vector<float> input);
 
-    //memory_optimization1
-    float testing_for_each_label(/*,int train_test_predict*/);
-    
-    void print_prediction(nn_core_data_package_class* data_pack,int train_test_predict);
-
     void predict_progress_bar();
-
-    void make_prediction_on_user_entered_data();
 
     string message;
     void print_message();
@@ -154,16 +129,33 @@ class segment_class{
     }
 
     public:
+    int no_of_threads;
+    chromosome* critical_variable;
 
-    void set_critical_variable(chromosome critical_cariable);
+    void start_trainer();//there cannot be a case of invalid network and data without labels.
+    
+    void train();
 
-    void set_ga_settings(unsigned int &iterations,unsigned int &population_size,unsigned int &mutation_percentage);
+    float testing_for_each_label(/*,int train_test_predict*/);
 
-    void start_segment(int no_of_threads);//train_test_predict=1//train_test_predic is required for extra assurance
+    bool load_segment_if_available(string file_name);
 
-    void add_data(nn_core_data_package_class* data_pack,int train_test_predict,string network_save_file_name);
+    void print_prediction(nn_core_data_package_class& data_pack,int train_test_predict);
+
+    void make_prediction_on_user_entered_data();
+
+    void set_ds(datapack_structure_defination ds1)
+    {   ds=ds1;}
+
+    void set_critical_variable(chromosome* critical_cariable);
+
+    void add_f_data(vector<nn_core_filtered_data>& f_data_vec);
+
+    void clear();
     
     string return_name()
     {   return segment_name;}
+    datapack_structure_defination return_ds()
+    {   return ds;}
     segment_class(int segment_aim1,int segment_no1,string segment_name1);
 };
