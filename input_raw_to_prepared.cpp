@@ -14,7 +14,6 @@ file modified of compability with shuttle_converted.csv
 
 using namespace std;
 
-string file_name;
 unsigned int iterations,population_size,mutation_percentage;
 
 struct raw_data{
@@ -44,7 +43,7 @@ void breaker(raw_data* rw_data,string line)
         {
             if(line.at(a)==',')
             {
-                float val = atof(num_char)*100;  
+                float val = atof(num_char);//*100  
                 //cout<<val<<endl;
                 one_row_of_data.push_back(val);
                 for(int b=0;b<20;b++){
@@ -56,12 +55,12 @@ void breaker(raw_data* rw_data,string line)
             ch[1]='\0';
             strcat(num_char,ch);
         }
-        one_row_of_data.push_back(atof(num_char)*100);
+        one_row_of_data.push_back(atof(num_char));//*100
         rw_data->rawData.push_back(one_row_of_data);
     }
 }
 
-void read_data_from_file(raw_data* rw_data)
+void read_data_from_file(raw_data* rw_data,string file_name)
 {
     ifstream  raw_data_stream(file_name,ios::in);
     string line;
@@ -89,10 +88,10 @@ void display_rw_data(raw_data* rw_data)
     }
 }
 
-void data_filter(raw_data* filtered_data)
+void data_filter(raw_data* filtered_data,string file_name)
 {
     raw_data rw_data;
-    read_data_from_file(&rw_data);
+    read_data_from_file(&rw_data,file_name);
     //display_rw_data(&rw_data);
     vector<float> row;
     for(int a=0;a<rw_data.rawData.size();a++)
@@ -107,10 +106,10 @@ void data_filter(raw_data* filtered_data)
     }
 }
 
-void prepare_data(nn_core_data_package_class* data_pack)
+void prepare_data(nn_core_data_package_class* data_pack,string file_name)
 {
     raw_data filtered_data;
-    data_filter(&filtered_data);
+    data_filter(&filtered_data,file_name);
     //display_rw_data(&filtered_data);
 
     vector<float> row;
@@ -133,7 +132,7 @@ void prepare_data(nn_core_data_package_class* data_pack)
     }
 }
 
-void display_prepared_data(nn_core_data_package_class* data_pack)
+void display_prepared_data(nn_core_data_package_class* data_pack,string file_name)
 {cout<<"\n\nhello= "<<file_name<<endl;;
     for(int a=0;a<data_pack->data.size();a++)
     {
@@ -310,13 +309,13 @@ void start_segment(
     int no_of_threads,
     int train_test_predict,
     nn_core_data_package_class& data_pack,
-    string network_save_file_name,
+    string segment_dir,
     chromosome critical_variables)
 {
     if(train_test_predict==2)//print predictions using already trained network
     {
         segment_class segment1(0,0,"default_segment");
-        if(segment1.load_segment_if_available(network_save_file_name)==true)
+        if(segment1.load_segment(segment_dir)==true)
         {   
             if(data_pack.data[0].size()==segment1.return_ds().no_of_elements_in_each_record)
             {   segment1.print_prediction(data_pack,train_test_predict);}
@@ -329,7 +328,7 @@ void start_segment(
     else if(train_test_predict==3)//making prediction on user entered individual data.
     {
         segment_class segment1(0,0,"default_segment");
-        bool network_load_status=segment1.load_segment_if_available(network_save_file_name);
+        bool network_load_status=segment1.load_segment(segment_dir);
         if(network_load_status==true)
         {   
             cout<<"\nNetwork successfully loaded";
@@ -377,30 +376,36 @@ void start_segment(
         }
         else if(train_test_predict==4)
         {
-            bool network_load_status=segment1.load_segment_if_available(network_save_file_name);
+            bool network_load_status=segment1.load_segment(segment_dir);
             if(network_load_status)
-            {   segment1.testing_for_each_label();}
+            {   
+                if(segment1.is_network_compatible_with_data())
+                {   segment1.testing_for_each_label();}
+                else
+                {   cout<<"\nERROR!! loaded network is not compatible with loaded dataset.";}
+            }
             else
             {   cout<<"\nERROR!!! failed to load network from the network file.";}
         }   
     }
 }
 
-void core_starter(string &file_name_local,int &test_train_predict,string &segment_save_file_name,int &no_of_threads)
+void segment_starter(string &file_name_local,int &test_train_predict,string &segment_save_file_name,int &no_of_threads)
 {
     nn_core_data_package_class data_pack;
-    file_name=file_name_local;
     if(test_train_predict==1 || test_train_predict==2 || test_train_predict==4)
     {   
-        prepare_data(&data_pack);
+        prepare_data(&data_pack,file_name_local);
         cout<<"\ndata file reading success!!!\n";
     }
-    if(test_train_predict==2)
+    if(test_train_predict==2)//preprocess the data_pack to move the labels to dataset
     {
-        //preprocess the data_pack to move the labels to dataset
+        for(int a=0;a<data_pack.data.size();a++)
+        {   data_pack.data[a].push_back(data_pack.labels[a]);}
+        data_pack.labels.clear();
     }
     chromosome critical_variables;
     if(test_train_predict==1)
     {   critical_variables=get_critical_variables_from_user(iterations,population_size,mutation_percentage);}
-    start_segment(no_of_threads,test_train_predict,data_pack,file_name,critical_variables);
+    start_segment(no_of_threads,test_train_predict,data_pack,segment_save_file_name,critical_variables);
 }

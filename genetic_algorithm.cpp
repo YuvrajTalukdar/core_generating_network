@@ -409,6 +409,7 @@ void genetic_algorithm::save_chromosome(chromosome& chromosome)
     file1<<"\nrhs_upper: "<<chromosome.rhs_upper;
     file1<<"\nrhs_lower: "<<chromosome.rhs_lower;
     file1<<"\nattributes_per_core: "<<chromosome.attributes_per_core;
+    file1<<"\ndata_division: "<<chromosome.data_division;
     file1<<"\nfitness: "<<chromosome.fitness;
     file1.close();
 }

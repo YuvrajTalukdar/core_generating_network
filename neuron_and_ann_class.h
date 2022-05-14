@@ -78,9 +78,12 @@ class ann{
     //operation variables
     int label_neuron_to_be_fired_id=0;
     bool label_neuron_reset_status=false;
+
+    vector<neuron> input_neurons;
+    vector<neuron> output_neurons;    
     
     public:
-    vector<float> elements;
+    vector<path_struct> path;
 
     void set_critical_variables(chromosome critical_variables)
     {
@@ -90,14 +93,6 @@ class ann{
         fp_change_value=critical_variables.fp_change_value;
         summation_temp_thershold=critical_variables.summation_temp_thershold;
     }
-
-    void set_elements_vector(vector<float> e)
-    {   elements=e;}
-
-    vector<neuron> input_neurons;
-    vector<neuron> output_neurons;
-    vector<float> mean_buffer;//what the fuck is this????
-    vector<path_struct> path;
 
     int return_no_of_paths()
     {   return path.size();}
@@ -129,7 +124,7 @@ class ann{
         {   output_neurons[a].set_neuron_identity(a,false,true);}
     }
 
-    void create_new_path(vector<float> weight_matrix,int output_id)
+    void create_new_path(vector<float> weight_matrix,int output_id)//to be called only during training and not during loading
     {
         //pthread_mutex_lock(&lock);
         int zero_count=0,extreame_value=0;

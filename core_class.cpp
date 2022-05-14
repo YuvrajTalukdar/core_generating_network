@@ -425,7 +425,7 @@ void modified_simplex_solver::make_solution_feasible::pivot_element_finder(simpl
 
 bool modified_simplex_solver::make_solution_feasible::add_index_data(int p_col,int p_row)
 {
-    if(buffer_obj.p_col_index.size()<4 && buffer_obj.p_row_index.size()<4)
+    if(buffer_obj.p_col_index.size()<4 && buffer_obj.p_row_index.size()<4)//10
     {
         buffer_obj.p_col_index.push_back(p_col);
         buffer_obj.p_row_index.push_back(p_row);
@@ -1130,7 +1130,7 @@ vector<neuron> core_class::propagate(vector<float> input_attributes_value)
     return network1.propagate();
 }
 
-void core_class::save_core()
+void core_class::save_core(string folder_dir)
 {
     time_t theTime = time(NULL);
     struct tm *aTime = localtime(&theTime);
@@ -1158,17 +1158,17 @@ void core_class::save_core()
     {   min_str="0"+min_str;}
     if(sec<10)
     {   sec_str="0"+sec_str;}
-    string net_savefile_id="";//core_aim,core_no,day,month,year
+    string core_savefile_id="";//core_aim,core_no,day,month,year
     string core_aim_str=to_string(core_aim);
     string core_no_str=to_string(core_no);
-    net_savefile_id=core_aim_str+core_no_str+year_str+month_str+day_str+hr_str+min_str+sec_str;
-    core_save_file_name="core-"+net_savefile_id+".csv";
-    ofstream file1(core_save_file_name,ios::out);
+    core_savefile_id=core_aim_str+core_no_str+year_str+month_str+day_str+hr_str+min_str+sec_str;
+    core_save_file_name="core-"+core_savefile_id+".csv";
+    ofstream file1(folder_dir+core_save_file_name,ios::out);
     file1<<"FILE_NAME:,\n";
     file1<<"name=,"<<core_save_file_name<<",\n";
     file1<<"BASIC_SAVEFILE_INFO:,\n";
-    file1<<",network_save_id,core_aim,core_no,year,month,day,hour,minute,sec,\n";
-    file1<<"network_save_id,"<<net_savefile_id<<","<<core_aim<<","<<core_no<<","<<year_str<<","<<month_str<<","<<day_str<<","<<hr_str<<","<<min_str<<","<<sec_str<<",\n";
+    file1<<",core_save_id,core_aim,core_no,year,month,day,hour,minute,sec,\n";
+    file1<<"core_save_id,"<<core_savefile_id<<","<<core_aim<<","<<core_no<<","<<year_str<<","<<month_str<<","<<day_str<<","<<hr_str<<","<<min_str<<","<<sec_str<<",\n";
     file1<<"BASIC_NETWORK_INFO:,";
     file1<<"net_info_category,no_of_input_neuron,no_of_output_neuron,\n";
     file1<<",net_info_category,"<<network1.input_neuron_size()<<","<<network1.output_neuron_size()<<",\n";
@@ -1208,318 +1208,89 @@ void core_class::save_core()
     file1.close();
 }
 
-bool core_class::load_network_if_available(int core_aim,int core_no,bool file_name_received,string file_name)
+vector<string> core_class::line_breaker(string line)
 {
-    string file_name_local;
-    bool file_found=false;
-    int weight_count=0;//weight_count
-    int no_of_input_neuron,no_of_output_neuron;
-    vector<float> elements;
-    if(file_name_received==false)
-    {        
-        //int core_aim=0, core_no=0;
-        struct dirent *de;  // Pointer for directory entry
-        // opendir() returns a pointer of DIR type. 
-        DIR *dr = opendir(".");
-        if (dr == NULL)  // opendir returns NULL if couldn't open directory
-        {
-            message.clear();
-            message="Could not open current directory";
-            print_message();
-            return false;
-        }
-        char filename_sub_str[]="network";
-        vector<string> network_save_file_list;
-        network_save_file_list.clear();
-        while ((de = readdir(dr)) != NULL)
-        {
-            if(strcasestr(de->d_name,filename_sub_str))
-            {   network_save_file_list.push_back(de->d_name);}
-        }
-        closedir(dr);    
-        //string required_save_filename;
-        vector<ifstream> input_file_streams(network_save_file_list.size());
-        for(int a=0;a<network_save_file_list.size();a++)
-        {   input_file_streams[a].open(network_save_file_list[a],ios::in);}
-        int input_file_stream_index;
-        for(int a=0;a<input_file_streams.size();a++)
-        {
-            int core_aim_read=7,core_no_read=5;
-            while(input_file_streams[a])
-            {
-                string line;
-                input_file_streams[a]>>line;
-                if(input_file_streams[a].eof())
-                {   break;}
-                char line_arr[line.length()];
-                bool core_no_read_collected=false,core_aim_read_collected=false;
-                strcpy(line_arr,line.c_str());
-                if(strcasestr(line_arr,"BASIC_SAVEFILE_INFO:"))
-                {
-                    input_file_streams[a]>>line;
-                    int core_aim_index,core_no_index,word_index=0;
-                    bool core_no_found=false,core_aim_found=false;
-                    char ch[2]={'\0'},ch_arr[20]={'\0'};
-                    for(int b=0;b<line.length();b++)
-                    {
-                        if(line.at(b)==',')
-                        {
-                            //float val = atof(num_char);  
-                            word_index++;
-                            if(strcasestr(ch_arr,"core_no"))
-                            {
-                                //cout<<"core_no= "<<word_index<<endl;
-                                core_no_index=word_index;
-                                core_no_found=true;
-                            }
-                            if(strcasestr(ch_arr,"core_aim"))
-                            {
-                                //cout<<"core_aim= "<<word_index;
-                                core_aim_index=word_index;
-                                core_aim_found=true;
-                            }
-                            for(int b=0;b<20;b++){
-                                ch_arr[b]='\0';
-                            }
-                            if(core_aim_found==true && core_no_found==true)
-                            {   break;}
-                            continue;
-                        }
-                        ch[0]=line.at(b);
-                        ch[1]='\0';
-                        strcat(ch_arr,ch);
-                    }
-                    if(core_aim_found==true && core_no_found==true)
-                    {
-                        input_file_streams[a]>>line;
-                        word_index=0;
-                        for(int b=0;b<line.length();b++)
-                        {
-                            if(line.at(b)==',')
-                            {
-                                //float val = atof(num_char);  
-                                word_index++;
-                                if(word_index==core_aim_index)
-                                {   
-                                    core_aim_read=atoi(ch_arr);
-                                    core_aim_read_collected==true;//bug may be present
-                                    //cout<<"core_aim= "<<core_aim_read<<endl;
-                                }
-                                if(word_index==core_no_index)
-                                {   
-                                    core_no_read=atoi(ch_arr);
-                                    core_no_read_collected==true;//bug may be  present
-                                    //cout<<"core_no= "<<core_no_read<<endl;
-                                }
-                                for(int b=0;b<20;b++){
-                                    ch_arr[b]='\0';
-                                }
-                                continue;
-                            }
-                            ch[0]=line.at(b);
-                            ch[1]='\0';
-                            strcat(ch_arr,ch);
-                        }
-                    }
-                }
-                if(core_no_read_collected==true && core_aim_read_collected==true)//what the fuck is this????? keep an eye on this for bugs
-                {   break;}
-            }
-            //cout<<"core_aim_read="<<core_aim_read<<" core_aim="<<core_aim<<endl;
-            //cout<<"core_no_read="<<core_no_read<<" core_no="<<core_aim<<endl;
-            if(core_aim==core_aim_read && core_no==core_no_read)
-            {   
-                input_file_stream_index=a;
-                file_found=true;
-                break;
-            }
-        }
-        for(int a=0;a<input_file_streams.size();a++)
-        {   input_file_streams[a].close();}
-        if(file_found==true)
-        {   file_name_local=network_save_file_list[input_file_stream_index];}
-    }
-    if(file_found==true || file_name_received==true)
+    vector<string> elements;
+    string word="";
+    for(int a=0;a<line.size();a++)
     {
-        if(file_name_received==true)
-        {   file_name_local=file_name;}
-        ifstream input_net_savefile(file_name_local,ios::in);
-        bool path_info_found=false;int p=0;
-        while(input_net_savefile)
+        if(line.at(a)==',')
         {
-            string line;
-            input_net_savefile>>line;
-            if(input_net_savefile.eof())
-            {   break;}
-            char line_arr[line.length()];
-            strcpy(line_arr,line.c_str());
-            int no_of_paths;
-            if(path_info_found==true)
-            {
-                p++;//reading the paths data.
-                char arr_temp[line.length()],ch[2];
-                int output_neuron_id;
-                vector<float> weight_matrix;
-                weight_matrix.clear();
-                int index=0;
-                for(int a=0;a<line.length();a++)
-                {
-                    if(line.at(a)==',')
-                    {
-                        index++;
-                        if(index>1 && (index-1)<=weight_count )
-                        {
-                            weight_matrix.push_back(atof(arr_temp));
-                        }
-                        if(index==(3+weight_count))
-                        {
-                            output_neuron_id=atof(arr_temp);
-                        }
-                        for(int b=0;b<line.length();b++){
-                            arr_temp[b]='\0';
-                        }
-                        continue;
-                    }
-                    ch[0]=line.at(a);
-                    ch[1]='\0';
-                    strcat(arr_temp,ch);
-                }
-                //point for entering the data in the network
-                /*for(int a=0;a<weight_matrix.size();a++)
-                {
-                    cout<<weight_matrix[a]<<",";
-                }
-                cout<<" output_neuron= "<<output_neuron_id;
-                cout<<endl;*/
-                network1.create_new_path(weight_matrix,output_neuron_id);
-            }
-            if(strcasestr(line_arr,"BASIC_NETWORK_INFO"))//needed to be added in the core_class function
-            {
-                input_net_savefile>>line;
-                char arr_temp[line.length()],ch[2];
-                int word_index=0;
-                for(int a=0;a<line.length();a++)
-                {
-                    if(line.at(a)==',')
-                    {
-                        word_index++;
-                        if(word_index==3)
-                        {
-                            no_of_input_neuron=atoi(arr_temp);//cout<<"arr_temp= "<<arr_temp;
-                            network1.set_no_of_input_neuron(no_of_input_neuron);
-                        }
-                        else if(word_index==4)
-                        {
-                            no_of_output_neuron=atoi(arr_temp);
-                            network1.set_no_of_output_neuron(no_of_output_neuron);
-                        }
-                        for(int b=0;b<line.length();b++)
-                        {   arr_temp[b]='\0';}
-                        continue;
-                    }
-                    ch[0]=line.at(a);
-                    ch[1]='\0';
-                    strcat(arr_temp,ch);
-                }
-            }
-            if(strcasestr(line_arr,"DATA_LABEL_AND_OUTPUT_NEURON_INDEX:"))
-            {
-                input_net_savefile>>line;
-                char arr_temp[line.length()],ch[2];
-                int word_index=0;
-                for(int a=0;a<line.length();a++)
-                {
-                    if(line.at(a)==',')
-                    {
-                        word_index++;
-                        if(word_index>1)
-                        {
-                            bool arr_temp_cleaner=false;
-                            for(int b=0;b<strlen(arr_temp);b++)
-                            {
-                                if(arr_temp[b]=='~')
-                                {   arr_temp_cleaner=true;}
-                                if(arr_temp_cleaner==true)
-                                {   arr_temp[b]='\0';}
-                            }
-                            elements.push_back(atof(arr_temp));
-                        }
-                        for(int b=0;b<line.length();b++)
-                        {   arr_temp[b]='\0';}
-                        continue;
-                    }
-                    ch[0]=line.at(a);
-                    ch[1]='\0';
-                    strcat(arr_temp,ch);
-                }
-                network1.set_elements_vector(elements);
-            }
-            if(strcasestr(line_arr,"PATH_INFO:"))
-            {
-                input_net_savefile>>line;
-                char arr_temp[line.length()],ch[2];
-                int word_index=0;
-                for(int a=0;a<line.length();a++)
-                {
-                    if(line.at(a)==',')
-                    {
-                        word_index++;
-                        if(word_index==2)
-                        {   
-                            no_of_paths=atoi(arr_temp);
-                        }
-                        for(int b=0;b<line.length();b++){
-                            arr_temp[b]='\0';
-                        }
-                        continue;
-                    }
-                    ch[0]=line.at(a);
-                    ch[1]='\0';
-                    strcat(arr_temp,ch);
-                }
-                //cout<<"no_of_paths= "<<no_of_paths;
-                input_net_savefile>>line;
-                char arr_temp1[line.length()],ch1[2];
-                for(int b=0;b<line.length();b++)
-                {
-                    arr_temp1[b]='\0';
-                }
-                for(int a=0;a<line.length();a++)
-                {
-                    if(line.at(a)==',')
-                    {
-                        //cout<<"arr_temp1= "<<arr_temp1<<endl;
-                        if(strcasestr(arr_temp1,"w"))
-                        {
-                            weight_count++;
-                        }
-                        for(int b=0;b<line.length();b++){
-                            arr_temp1[b]='\0';
-                        }
-                        continue;
-                    }
-                    ch1[0]=line.at(a);
-                    ch1[1]='\0';
-                    strcat(arr_temp1,ch1);
-                }
-                path_info_found=true;
-                //cout<<"weight_count= "<<weight_count;
-                //int g;cin>>g;
-            }
+            elements.push_back(word);
+            word="";
+            continue;
         }
-        network_analyzer();//initialization of ns
-        return true;
+        word+=(line.at(a));
     }
-    else
-    {   return false;}
+    return elements;
+}
+bool core_class::load_core(string core_file_dir)
+{
+    ifstream file1(core_file_dir,ios::in);
+    string line="";
+    int line_count=0;
+    vector<string> elements;
+    int no_of_path=10;
+    try{
+        while(file1)
+        {
+            file1>>line;
+            if(line_count==1)
+            {
+                elements=line_breaker(line);
+                core_save_file_name=elements[1];
+            }
+            else if(line_count==4)
+            {
+                elements=line_breaker(line);
+                core_aim=stoi(elements[2]);
+                core_no=stoi(elements[3]);
+            }
+            else if(line_count==6)
+            {
+                elements=line_breaker(line);
+                network1.set_no_of_input_neuron(stoi(elements[2]));
+                network1.set_no_of_output_neuron(stoi(elements[3]));
+            }
+            else if(line_count==10)
+            {
+                elements=line_breaker(line);
+                no_of_path=stoi(elements[1]);
+            }
+            else if(line_count>11)
+            {
+                elements=line_breaker(line);
+                path_struct path;
+                path.output_neuron_id;
+                for(int a=0;a<network1.input_neuron_size();a++)
+                {   
+                    path.input_neuron_id.push_back(a);
+                    path.weight_matrix.push_back(stof(elements[a+1]));
+                }
+                path.output_neuron_id=stoi(elements[elements.size()-1]);
+                network1.path.push_back(path);
+            }
+            line_count++;
+            if(network1.path.size()==no_of_path)
+            {   break;}
+        }
+    }
+    catch(exception q)
+    {   
+        file1.close();
+        return false;
+    }
+    file1.close();
+    network_analyzer();//initialization of ns
+    message="\nCore "+to_string(core_no)+" Loaded Successfully...";
+    cout<<message;
+    return true;
 }
 
 void core_class::network_analyzer()
 {
     ns.no_of_input_neuron=network1.input_neuron_size();
     ns.no_of_output_neuron=network1.output_neuron_size();
-    ns.elements=network1.elements;
-    ns.mean_buffer_size=network1.input_neurons.size();//what the fuck is this????
 }
 
 void core_class::big_c_datapack_handler(vector<converted_data_pack> &cdp)//passing the vector by reference //this function might be a temporary offer //this is for preventing 0:0 bug
@@ -1921,7 +1692,6 @@ void core_class::network_structure_modifier()
         if(ns.no_of_input_neuron>ds.no_of_elements_in_each_record)
         {
             throw("network has more neuron than required by the data");//needs working here. UNDER CONSTRUCTION.
-            save_core();
         }
         else
         {

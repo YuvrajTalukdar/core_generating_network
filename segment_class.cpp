@@ -29,10 +29,111 @@ void segment_class::predict_progress_bar()//need analyzing
     }
 }
 
-bool segment_class::load_segment_if_available(string file_name)//under construction
+bool segment_class::is_network_compatible_with_data()
 {
-    f_test_data_vector=f_data_vector;
-    return false;
+    int total_input_neuron=0;
+    for(int a=0;a<core_vector.size();a++)
+    {   total_input_neuron+=core_vector[a]->return_no_of_input_neuron();}
+    if(f_test_data_vector[0].data[0].size()==total_input_neuron && f_test_data_vector.size()==core_vector[0]->return_no_of_output_neuron())
+    {   return true;}
+    else
+    {   return false;}
+}
+
+vector<string> segment_class::line_breaker(string line)
+{
+    vector<string> elements;
+    string word="";
+    for(int a=0;a<line.size();a++)
+    {
+        if(line.at(a)==',')
+        {
+            elements.push_back(word);
+            word="";
+            continue;
+        }
+        word+=(line.at(a));
+    }
+    return elements;
+}
+bool segment_class::load_segment(string segment_dir)//under construction
+{
+    f_test_data_vector=f_data_vector;//this line is needed
+    critical_variables_set=true;
+    string segment_file_name;
+    for (const auto & entry : fs::directory_iterator(segment_dir))
+    {   
+        if(strcasestr(entry.path().filename().c_str(),"segment-")!=NULL)
+        {   segment_file_name=entry.path().filename();break;}
+    }
+    //read segment file
+    ifstream file1(segment_dir+"/"+segment_file_name,ios::in);
+    int no_of_cores=9;
+    int line_count=0;
+    vector<string> elements;
+    string line;
+    try{
+        while(file1)
+        {
+            file1>>line;
+            if(line_count==1)//get segment name
+            {   
+                elements=line_breaker(line);
+                segment_save_file_name=elements[1];
+            }
+            else if(line_count==4)//segment id data
+            {
+                elements=line_breaker(line);
+                segment_aim=stoi(elements[2]);
+                segment_no=stoi(elements[3]);
+            }
+            else if(line_count==5)
+            {
+                elements=line_breaker(line);
+                int state=stoi(elements[1]);
+                critical_variable = new chromosome();
+                if(state==0)
+                {   critical_variable->flatening_fx_enabled=false;}
+                else if(state==1)
+                {   critical_variable->flatening_fx_enabled=true;}
+            }
+            else if(line_count==6)
+            {
+                elements=line_breaker(line);
+                critical_variable->summation_temp_thershold=stoi(elements[1]);
+            }
+            else if(line_count==8)//no of cores
+            {
+                elements=line_breaker(line);
+                no_of_cores=stoi(elements[1]);
+            }
+            else if(line_count>9)//core id and file information
+            {
+                elements=line_breaker(line);
+                core_class* core=new core_class(stoi(elements[2]),stoi(elements[1]),segment_aim,segment_no,elements[3],ds);
+                core->set_critical_variable(*critical_variable);
+                core->load_core(segment_dir+"/"+elements[4]);
+                core_vector.push_back(core);
+            }
+            line_count++;
+            if(core_vector.size()==no_of_cores)
+            {   break;}
+        }
+    }
+    catch(exception e)
+    {   
+        file1.close();
+        return false;
+    }
+    file1.close();
+    if(core_vector.size()==0)
+    {   return false;}
+    else
+    {   
+        message="\nSegment Loaded Successfully...";
+        print_message();
+        return true;
+    }
 }
 
 void segment_class::checker_df(vector<neuron> &output_neurons)
@@ -201,7 +302,61 @@ void segment_class::make_prediction_on_user_entered_data()
 
 void segment_class::save_segment()//save all the cores and have a segment structure file
 {
-
+    time_t theTime = time(NULL);
+    struct tm *aTime = localtime(&theTime);
+    int day = aTime->tm_mday;
+    string day_str= to_string(day);
+    if(day<10)
+    {   day_str="0"+day_str;}
+    int month = aTime->tm_mon + 1; // Month is 0 - 11, add 1 to get a jan-dec 1-12 concept
+    string month_str=to_string(month);
+    if(month<10)
+    {   month_str="0"+month_str;}
+    int year = aTime->tm_year + 1900; // Year is # years since 1900
+    string year_str=to_string(year);
+    time_t now = time(0);
+    // Convert now to tm struct for local timezone
+    tm* localtm = localtime(&now);
+    int hr,min,sec;
+    hr=localtm->tm_hour;
+    min=localtm->tm_min;
+    sec=localtm->tm_sec;
+    string hr_str=to_string(hr),min_str=to_string(min),sec_str=to_string(sec);
+    if(hr<10)
+    {   hr_str="0"+hr_str;}
+    if(min<10)
+    {   min_str="0"+min_str;}
+    if(sec<10)
+    {   sec_str="0"+sec_str;}
+    string segment_savefile_id="";//core_aim,core_no,day,month,year
+    string segment_aim_str=to_string(segment_aim);
+    string segment_no_str=to_string(segment_no);
+    segment_savefile_id=segment_aim_str+segment_no_str+year_str+month_str+day_str+hr_str+min_str+sec_str;
+    segment_save_file_name="segment-"+segment_savefile_id+".csv";
+    string folder_dir="./trained_network/segment_"+segment_savefile_id+"/";
+    fs::create_directories(folder_dir);
+    ofstream file1(folder_dir+segment_save_file_name,ios::out);
+    file1<<"FILE_NAME:,\n";
+    file1<<"name=,"<<segment_save_file_name<<",\n";
+    file1<<"BASIC_SAVEFILE_INFO:,\n";
+    file1<<",segment_save_id,segment_aim,segment_no,year,month,day,hour,minute,sec,\n";
+    file1<<"segment_save_id,"<<segment_savefile_id<<","<<segment_aim<<","<<segment_no<<","<<year_str<<","<<month_str<<","<<day_str<<","<<hr_str<<","<<min_str<<","<<sec_str<<",\n";
+    file1<<"flatening_fx_enabled=,";
+    if(critical_variable->flatening_fx_enabled)
+    {   file1<<1<<",\n";}
+    else
+    {   file1<<0<<",\n";}
+    file1<<"summation_temp_thershold=,"<<critical_variable->summation_temp_thershold<<",\n";
+    file1<<"CORE_INFORMATION:,\n";
+    file1<<"no_of_cores=,"<<core_vector.size()<<",\n";
+    file1<<"sino,core_no,core_aim,core_name,core_save_file_name,\n";
+    for(int a=0;a<core_vector.size();a++)
+    {   
+        core_vector[a]->save_core(folder_dir);
+        file1<<a<<","<<core_vector[a]->return_core_no()<<","<<core_vector[a]->return_core_aim()<<","<<core_vector[a]->return_name()<<","<<core_vector[a]->return_core_savefile_name()<<",\n";
+    }
+    clear();
+    file1.close();
 }
 
 int segment_class::index_of_neuron_to_be_fired(int label,vector<float> elements)
@@ -221,6 +376,8 @@ float segment_class::testing_for_each_label()//finds the accuracy of each label
     int correct=0,total=0;
     int fired_neuron_index;
     int df[f_test_data_vector.size()]={0},nf[f_test_data_vector.size()]={0};
+    bool print_correct_incorrect_data=false;
+    nn_core_data_package_class correct_data,incorrect_data;
     for(int a=0;a<f_test_data_vector.size();a++)
     {
         correct_each_label[a]=0;
@@ -229,15 +386,35 @@ float segment_class::testing_for_each_label()//finds the accuracy of each label
         {
             fired_neuron_index=propagate(f_test_data_vector[a].data[b]);
             if(fired_neuron_index==index_of_neuron_to_be_fired(f_test_data_vector[a].label,ds.elements))
-            {   correct_each_label[a]++;}
+            {   
+                correct_each_label[a]++;
+                if(print_correct_incorrect_data)
+                {
+                    correct_data.data.push_back(f_test_data_vector[a].data[b]);
+                    correct_data.labels.push_back(f_data_vector[a].label);
+                }
+            }
             else if(fired_neuron_index==-1)
             {   nf[a]++;}
             else if(fired_neuron_index==-2)
             {   df[a]++;}
+            else
+            {
+                if(print_correct_incorrect_data)
+                {
+                    incorrect_data.data.push_back(f_test_data_vector[a].data[b]);
+                    incorrect_data.labels.push_back(f_data_vector[a].label);
+                }
+            }
             total_each_label[a]++;
         }
         correct+=correct_each_label[a];
         total+=f_test_data_vector[a].data.size();
+    }
+    if(print_correct_incorrect_data)
+    {
+        save_data_pack("incorrect_data.csv",incorrect_data);
+        save_data_pack("correct_data.csv",correct_data);
     }
     float avg_accuracy=0,accuracy;
     for(int a=0;a<f_test_data_vector.size();a++)
@@ -390,27 +567,23 @@ void segment_class::f_data_viewer(string str,vector<nn_core_filtered_data> f_dat
     }
 }
 
-bool segment_class::ds_ns_have_same_labels(core_class* core)
+void segment_class::save_data_pack(string name,nn_core_data_package_class data_pack)
 {
-    if(ds.elements.size()<=core->return_ns().elements.size())
-    {   
-        int count=0;
-        for(int a=0;a<ds.elements.size();a++)
+    ofstream file1(name,ios::out);
+    string line="";
+    for(int a=0;a<data_pack.data.size();a++)
+    {
+        for(int b=0;b<data_pack.data[a].size();b++)
         {
-            for(int b=0;b<core->return_ns().elements.size();b++)
-            {
-                if(ds.elements[a]==core->return_ns().elements[b])
-                {   count++;}
-            }
+            line+=to_string(data_pack.data[a][b]/100);
+            line+=",";
         }
-        //cout<<"count= "<<count<<" ds= "<<ds.elements.size()<<"ns= "<<ns.elements.size()<<endl;
-        if(count==ds.elements.size() && count==core->return_ns().elements.size())
-        {   return true;}
-        else
-        {   return false;}//means current ds is different from previous ds which was used to train the network
+        line+=to_string(data_pack.labels[a]/100);
+        line+="\n";
+        file1<<line;
+        line="";
     }
-    else 
-    {   return false;}//means current ds is different from previous ds which was used to train the network
+    file1.close();
 }
 
 void segment_class::clear()
@@ -445,8 +618,6 @@ void segment_class::train()
             core_vector[a]->load_training_data_into_core(f_train_data_split[a],no_of_threads);
             core_vector[a]->train_core();
             if(critical_variables_set)
-            {   core_vector[a]->save_core();}
-            if(critical_variables_set)
             {
                 message.clear();
                 message="\nCore "+to_string(core_vector[a]->return_core_no())+" training complete.";
@@ -479,16 +650,10 @@ void segment_class::train()
             }
         }
         thread_vec.clear();
-        if(critical_variables_set)
-        {
-            for(int a=0;a<core_vector.size();a++)
-            {   core_vector[a]->save_core();}
-        }
     }
     critical_variable->fitness=testing_for_each_label();
-    for(int a=0;a<core_vector.size();a++)
-    {   delete core_vector[a];}
-    core_vector.clear();
+    if(!critical_variables_set)
+    {   clear();}
 }
 
 void segment_class::start_trainer()

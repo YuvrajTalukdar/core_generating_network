@@ -13,24 +13,32 @@ using namespace std;
 void clrscr()
 {
     cout << "\033[2J\033[1;1H";
-    //system("clear");
 }
 
-string select_network_file(vector<string>& csv_save_file)
+string select_network_file()
 {
-    cout<<"\n\nChoose the network save file:-\n";
-    char filename_sub_str2[]="network-";
+    struct dirent *de;
+    DIR *dr = opendir("./trained_network/");
+    if (dr == NULL)
+    {
+        cout<<"Could not open current directory";
+        return "";
+    }
     vector<string> network_save_file;
     network_save_file.clear();
-    for(int a=0;a<csv_save_file.size();a++)
+    while ((de = readdir(dr)) != NULL)
     {
-        if(strcasestr(csv_save_file[a].c_str(),filename_sub_str2))
-        {   network_save_file.push_back(csv_save_file[a]);}
+        //cout<<"\nname="<<de->d_name;
+        if(strcasestr(de->d_name,"segment_")!=NULL)//strcasestr returns only char*
+        {   network_save_file.push_back(de->d_name);}
     }
+    closedir(dr);
+    
+    cout<<"\n\nChoose the segment save folder:-\n";
     for(int a=0;a<network_save_file.size();a++)
     {   cout<<a+1<<". "<<network_save_file[a]<<endl;}
     if(network_save_file.size()==0)
-    {   cout<<"\nERROR No network file found in the current directory!!!\n";}
+    {   cout<<"\nERROR No segment folder found in the current directory!!!\n";}
     cout<<"\npress 0 to go back\n";
     point1:
     cout<<"\nEnter your option: ";
@@ -44,7 +52,7 @@ string select_network_file(vector<string>& csv_save_file)
     else if(option2==0)
     {   return "";}
     else
-    {   return network_save_file[option2-1];}
+    {   return "./trained_network/"+network_save_file[option2-1];}
 }
 
 string select_data_file(vector<string>& csv_save_file)
@@ -101,14 +109,12 @@ bool menu(string &file_name,int &test_train_predict,string &network_save_file_na
         return false;
     }
     char filename_sub_str[]=".csv";
-    vector<string> csv_save_file,network_save_files;
+    vector<string> csv_save_file;
     csv_save_file.clear();
     while ((de = readdir(dr)) != NULL)
     {
         if(strcasestr(de->d_name,filename_sub_str) && strcasestr(de->d_name,"network-")==NULL && strcasestr(de->d_name,"core-")==NULL)//strcasestr returns only char*
         {   csv_save_file.push_back(de->d_name);}
-        else if(strcasestr(de->d_name,filename_sub_str) && strcasestr(de->d_name,"network-") && strcasestr(de->d_name,"core-")==NULL)
-        {   network_save_files.push_back(de->d_name);}
     }
     closedir(dr);
     //home page
@@ -159,7 +165,7 @@ bool menu(string &file_name,int &test_train_predict,string &network_save_file_na
         cout<<setw(w.ws_col/2+heading.length()/2)<<heading;  
         string note2="\n\nThe prediction results will be saved in a file named prediction_results.csv. ";
         cout<<"\n\nNOTE:-"<<note2; 
-        network_save_file_name=select_network_file(network_save_files);
+        network_save_file_name=select_network_file();
         if(network_save_file_name.length()==0)
         {   goto point0;}
         clrscr();
@@ -179,7 +185,7 @@ bool menu(string &file_name,int &test_train_predict,string &network_save_file_na
         string note2="\n\nHere you can enter the data yourself and let the algorithm predict the appropriate result, \nthe result will appear instantaneously in this interface itself.";
         cout<<"\n\nNOTE:-"<<note2; 
         //.network file finder
-        network_save_file_name=select_network_file(network_save_files);
+        network_save_file_name=select_network_file();
         if(network_save_file_name.length()==0)
         {   goto point0;}
         
@@ -194,7 +200,7 @@ bool menu(string &file_name,int &test_train_predict,string &network_save_file_na
         string note="\n\nHere an existing network will be used to test the accuracy that can be achieved by it.";
         cout<<"\n\nNOTE:-"<<note;
         //.network file finder
-        network_save_file_name=select_network_file(network_save_files);
+        network_save_file_name=select_network_file();
         if(network_save_file_name.length()==0)
         {   goto point0;}
         clrscr();

@@ -216,8 +216,6 @@ class simplex_solver_data_preparation_class
 struct network_structure_defination{
     int no_of_input_neuron=0;
     int no_of_output_neuron=0;
-    int mean_buffer_size=0;
-    vector<float> elements;
 };
 
 class core_class
@@ -241,8 +239,6 @@ class core_class
     datapack_structure_defination ds;//for the data which will be processed by this particular core
     network_structure_defination ns;
 
-    bool load_network_if_available(int core_aim=0,int core_no=0,bool file_name_received=false,string file_name="");
-
     void network_structure_modifier();
 
     void network_analyzer();//it fills up the network_structure_defination ns based on the initialized network structure. 
@@ -265,8 +261,12 @@ class core_class
     string message;
     void print_message();
     void clrscr();
-
+    vector<string> line_breaker(string line);
+    
     public:
+    
+    bool load_core(string core_file_dir="");
+
     void clear_core();//deletes all the data and network present inside the core. This function is not yet implemented.
     
     vector<neuron> propagate(vector<float> input_attributes_value);//need to be implemented
@@ -275,7 +275,7 @@ class core_class
 
     void train_core();//earlier called simplex_solver_data_entry_point
 
-    void save_core();
+    void save_core(string folder_dir);
     
     network_structure_defination return_ns()
     {   return ns;}
@@ -291,6 +291,10 @@ class core_class
     {   return network1.output_neuron_size();}
     datapack_structure_defination return_core_ds()
     {   return ds;}
+    int return_core_aim()
+    {   return core_aim;}
+    int return_no_of_paths()
+    {   return network1.path.size();}
 
     void set_critical_variable(chromosome critical_variable);
 

@@ -3,11 +3,13 @@ core class handles natural cores
 */
 #include<chrono>
 #include<random>
+#include<filesystem>
 #include"neuron_and_ann_class.h"
 #include"core_class.h"
 
 using namespace std;
 using namespace std::chrono;
+namespace fs = std::filesystem;
 
 class genetic_algorithm
 {
@@ -81,8 +83,6 @@ class segment_class{
 
     void filter(nn_core_data_package_class* data_pack);
 
-    bool ds_ns_have_same_labels(core_class* core);
-
     vector<nn_core_filtered_data> f_data_vector;
     vector<nn_core_filtered_data> f_test_data_vector;
     vector<vector<nn_core_filtered_data>> f_train_data_split;
@@ -128,9 +128,13 @@ class segment_class{
         }
     }
 
+    void save_data_pack(string name,nn_core_data_package_class data_pack);
+
     public:
     int no_of_threads;
     chromosome* critical_variable;
+
+    bool is_network_compatible_with_data();
 
     void start_trainer();//there cannot be a case of invalid network and data without labels.
     
@@ -138,7 +142,8 @@ class segment_class{
 
     float testing_for_each_label(/*,int train_test_predict*/);
 
-    bool load_segment_if_available(string file_name);
+    vector<string> line_breaker(string line);
+    bool load_segment(string segment_dir);
 
     void print_prediction(nn_core_data_package_class& data_pack,int train_test_predict);
 
