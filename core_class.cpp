@@ -1252,6 +1252,26 @@ bool core_class::load_core(string core_file_dir)
                 network1.set_no_of_input_neuron(stoi(elements[2]));
                 network1.set_no_of_output_neuron(stoi(elements[3]));
             }
+            else if(line_count==8)
+            {
+                elements=line_breaker(line);
+                ds.elements.resize(elements.size()-1);
+                string data_label_str="",output_neuron_index_str="";
+                for(int a=1;a<elements.size();a++)
+                {
+                    int symbol_index;
+                    for(int b=0;b<elements[a].size();b++)
+                    {
+                        if(elements[a][b]=='~')
+                        {   symbol_index=b;break;}
+                    }
+                    data_label_str="";
+                    data_label_str.insert(data_label_str.begin(),elements[a].begin(),elements[a].begin()+symbol_index);
+                    output_neuron_index_str="";
+                    output_neuron_index_str.insert(output_neuron_index_str.begin(),elements[a].begin()+symbol_index+1,elements[a].end());
+                    ds.elements[stoi(output_neuron_index_str)]=stoi(data_label_str);
+                }
+            }
             else if(line_count==10)
             {
                 elements=line_breaker(line);

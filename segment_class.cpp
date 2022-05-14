@@ -130,6 +130,11 @@ bool segment_class::load_segment(string segment_dir)//under construction
     {   return false;}
     else
     {   
+        ds.elements=core_vector[0]->return_core_ds().elements;
+        ds.no_of_elements_in_each_record=0;
+        for(int a=0;a<core_vector.size();a++)
+        {   ds.no_of_elements_in_each_record+=core_vector[a]->return_no_of_input_neuron();}
+        ds.no_of_labels=core_vector[0]->return_no_of_output_neuron();
         message="\nSegment Loaded Successfully...";
         print_message();
         return true;
@@ -271,14 +276,17 @@ int segment_class::propagate(vector<float> input)//will return the index of 1 fi
 void segment_class::make_prediction_on_user_entered_data()
 {
     clrscr();
+    int no_of_input_neurons=0;
+    for(int a=0;a<core_vector.size();a++)
+    {   no_of_input_neurons+=core_vector[a]->return_no_of_input_neuron();}
     char continue1='y';
     vector<float> data_vector;
     float label;
     int fired_neuron_index,correct;
     while(continue1=='y'||continue1=='Y')
     {
-        cout<<"\nEnter the "<<ds.no_of_elements_in_each_record<<" digit data: \n";
-        for(int a=0;a<ds.no_of_elements_in_each_record;a++)
+        cout<<"\nEnter the "<<no_of_input_neurons<<" digit data: \n";
+        for(int a=0;a<no_of_input_neurons;a++)
         {   
             float data;
             cout<<"a"<<a<<"= ";
@@ -450,25 +458,19 @@ void segment_class::print_prediction(nn_core_data_package_class& data_pack,int t
     if(pds==true)
     {   predict_progress_bar_thread=new thread(&segment_class::predict_progress_bar,this);}
     
-    int fired_neuron_index,correct=0;
     for(int a=0;a<data_pack.data.size();a++)
     {
         for(int b=0;b<data_pack.data[a].size();b++)
         {   file1<<data_pack.data[a][b]<<",";}
-        fired_neuron_index=propagate(data_pack.data[a]);
-        label=ds.elements[fired_neuron_index];
+        label=ds.elements[propagate(data_pack.data[a])];
         file1<<":"<<label<<",\n";
-        if(fired_neuron_index==index_of_neuron_to_be_fired(data_pack.labels[a],ds.elements))
-        {   correct++;}
         shared_block_data_obj.predict_progress_bar_numerator++;
     }
     if(pds==true)
     {   predict_progress_bar_thread->join();}
     
     file1.close();
-    message="\nPrediction complete, check the file prediction_result.csv\n";
-    print_message();
-    message="\n\nAccuracy= "+to_string((((float)correct)/((float)data_pack.data.size()))*100)+"%"+" correct= "+to_string(correct)+" total= "+to_string(data_pack.data.size());
+    message="\nPrediction complete, results saved in the file prediction_result.csv\n";
     print_message();
 }
 
