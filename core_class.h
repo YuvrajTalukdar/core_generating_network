@@ -21,16 +21,6 @@ core class handles natural cores
 using namespace std;
 static pthread_mutex_t lock_1;
 inline bool display_iterations=false;//iteration display switch for debugging the code
-inline bool pds=true;//progress_display_system for displaying the progress bar
-//int fg=2;//for the checker
-struct shared_block_data//required for 
-{
-    int predict_progress_bar_numerator=0;//required for prediction progress bar
-    int predict_progress_bar_denominator=0;//required for prediction progress bar
-    int no_of_c_datapacks_completed=0;//required for training progress bar
-    int total_c_datapacks;//required for training progress bar
-};
-inline shared_block_data shared_block_data_obj;
 
 struct datapack_structure_defination{
     int no_of_labels;
@@ -40,67 +30,22 @@ struct datapack_structure_defination{
     float upper_not_firing_constrain_rhs;//=10; //10
 };
 
-struct converted_data_pack{
+struct converted_data_pack
+{
     vector<vector<float>> firing_data;
     vector<vector<float>> not_firing_data;
-    vector<float> objective_function_coefficients;
+    //vector<float> objective_function_coefficients;
     vector<float> weight_matrix;//ans stored here.
     int firing_neuron_index;
     float firing_label;
     bool corupt_pack=false;
 };
 
-struct conflicting_data_id{
-            vector<int> id;
-            bool conflict_id_present=false;
-        };
-
-class ratio_locker
+struct conflicting_data_id
 {
-    private:
-    bool lock_enabled=false;
-    int no_of_labels;
-    vector<int> no_of_data_for_each_labels;
-    vector<float> ratios;
-    public:
-    void set_ratios(vector<int> data_no_vec)
-    {
-        if(lock_enabled==false)
-        {
-            lock_enabled=true;
-            no_of_data_for_each_labels=data_no_vec;
-            no_of_labels=data_no_vec.size();
-            for(int a=0;a<no_of_labels;a++)
-            {
-                float sum=0;
-                for(int b=0;b<no_of_labels;b++)
-                {
-                    if(b!=a)
-                    {
-                        sum=sum+data_no_vec[b];
-                    }
-                }
-                ratios.push_back(data_no_vec[a]/sum);
-            }
-        }
-    }
-
-    void un_lock()
-    {   lock_enabled=false;}
-
-    void lock()
-    {   lock_enabled=true;}
-
-    float get_ratio(int label_index)
-    {   return ratios[label_index];}
-
-    float get_default_ratio()
-    {   return 1;}
-
-    bool is_locked()
-    {   return lock_enabled;}
+    vector<int> id;
+    bool conflict_id_present=false;
 };
-static ratio_locker ratio_locker1;
 
 class modified_simplex_solver{
     private:
@@ -114,16 +59,16 @@ class modified_simplex_solver{
             int id;
         };
 
-    struct simplex_table{
-
+    struct simplex_table
+    {
         vector<id> c_id;//no_of_columns-rhs-z
         vector<id> r_id; //no_of_rows-z_row
         vector<vector<float>> basic_var; //no_of_column-slack_var-z-rhs-theta*no_of_rows-z_row
         vector<vector<float>> slack_var; //no_of_columns-basic_var-rhs-theta*no_of_rows-z_row
-        vector<float> z_col;//no_of_rows-z_row
+        //vector<float> z_col;//no_of_rows-z_row
         vector<double> rhs;//no_of_rows-z_row//actual double
         vector<long double> theta;//no_of_rows-z_row//actual long double
-        vector<float> z_row;//no_of_columns
+        //vector<float> z_row;//no_of_columns
     };
 
     class simplex_optimizer{
@@ -201,7 +146,6 @@ class simplex_solver_data_preparation_class
 
     void cdp_saver_in_mathematical_format(converted_data_pack* cdp);
     
-    //void cdp_saver(converted_data_pack* cdp);
     void print_message();
     vector<converted_data_pack> fucked_up_cyclic_cdp;
     void cdp_spliter(vector<converted_data_pack> &cdps,int index);
@@ -223,6 +167,7 @@ class core_class
     private:
     bool display_core_events=false;
     //training data pointers
+    int *split_start,*split_end;
     vector<nn_core_filtered_data>* f_data_pack;
     //core identification information
     int core_no=0,core_aim=0;//this two must be changed using a function so that proper core is loaded
@@ -230,9 +175,6 @@ class core_class
     string core_name;
     string core_save_file_name="NULL";//provided if core is loaded from a core/network savefile. Not set using constructor
     bool id_lock=false;
-    //progress bar data
-    //int predict_progress_bar_numerator=0;//for the predict progress bar
-    //int predict_progress_bar_denominator=0;//for the predict progress bar
     //training information
     ann network1;
     int no_of_threads;
@@ -249,8 +191,6 @@ class core_class
     };
 
     void big_c_datapack_handler(vector<converted_data_pack> &cdp);//passing the vector by reference //this function might be a temporary offer //this is for preventing 0:0 bug
-
-    void display_training_progress();
 
     int size_of_c_datapacks_vector(vector<converted_data_pack> &c_datapacks);
 
@@ -271,7 +211,7 @@ class core_class
     
     vector<neuron> propagate(vector<float> input_attributes_value);//need to be implemented
 
-    void load_training_data_into_core(vector<nn_core_filtered_data>& f_data_pack1,int& no_of_threads1);
+    void load_training_data_into_core(vector<nn_core_filtered_data>& f_data_pack1,int& no_of_threads1,int &split_start,int &split_end);
 
     void train_core();//earlier called simplex_solver_data_entry_point
 

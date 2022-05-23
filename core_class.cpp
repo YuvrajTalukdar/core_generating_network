@@ -83,15 +83,15 @@ void modified_simplex_solver::make_solution_feasible::display_st(simplex_table s
         {
             file1<<st.slack_var[a][c]<<",";
         }
-        file1<<st.z_col[a]<<","<<st.rhs[a]<<","<<st.theta[a]<<",";
+        file1/*<<st.z_col[a]<<","*/<<st.rhs[a]<<","<<st.theta[a]<<",";
 
         file1<<"\n";
     }
-    file1<<"z,";
+    /*file1<<"z,";
     for(int a=0;a<st.z_row.size();a++)
     {
         file1<<st.z_row[a]<<",";
-    }
+    }*/
 
     file1.close();
 }
@@ -133,7 +133,7 @@ void modified_simplex_solver::make_solution_feasible::simplex_table_modifier(int
     st->r_id[p_row_index].theta=st->c_id[p_col_index].theta;
     //st->r_id[p_row_index].z=st->r_id[p_col_index].z; //logically this line is fucked up dont know how it was working earlier
 
-    float pe;bool checker=false;
+    float pe;
     //pivot element extractor
     if(p_col_index<st->basic_var[0].size())
     {
@@ -155,7 +155,6 @@ void modified_simplex_solver::make_solution_feasible::simplex_table_modifier(int
             message="pe= "+to_string(pe)+"\n\n\ncheck table";
             print_message();
         }
-        checker=true;
     }
 
     //pivot row modifier
@@ -165,9 +164,8 @@ void modified_simplex_solver::make_solution_feasible::simplex_table_modifier(int
     for(int a=0;a<st->slack_var[p_row_index].size();a++)
     {   st->slack_var[p_row_index][a]=st->slack_var[p_row_index][a]/pe;}
 
-    st->z_col[p_row_index]=st->z_col[p_row_index]/pe;
-    double rhs_temp1=st->rhs[p_row_index],pe_temp1=pe;
-    st->rhs[p_row_index]=rhs_temp1/pe_temp1;
+    //st->z_col[p_row_index]=st->z_col[p_row_index]/pe;
+    st->rhs[p_row_index]=st->rhs[p_row_index]/((double)pe);
 
     //rest of the row - z_row modifier
     bool basic_point=true;
@@ -207,7 +205,7 @@ void modified_simplex_solver::make_solution_feasible::simplex_table_modifier(int
         }
 
         //z col modification
-        st->z_col[a]=(st->z_col[a]-multiplying_element*st->z_col[p_row_index]);
+        //st->z_col[a]=(st->z_col[a]-multiplying_element*st->z_col[p_row_index]);
         //rhs col modification instruction
         st->rhs[a]=st->rhs[a]-multiplying_element*st->rhs[p_row_index];
     }
@@ -219,7 +217,7 @@ void modified_simplex_solver::make_solution_feasible::simplex_table_modifier(int
         message="\np_col_index= "+to_string(p_col_index)+" multiplying element= "+to_string(multiplying_element);
         print_message();
     }
-    multiplying_element=st->z_row[p_col_index];
+    //multiplying_element=st->z_row[p_col_index];
     //vector<float> basic_plus_slack_plus_z_plus_rhs_temp;
     //basic_plus_slack_plus_z_plus_rhs_temp.clear();
     buffer_obj.basic_plus_slack_plus_z_plus_rhs_temp.clear();
@@ -233,15 +231,14 @@ void modified_simplex_solver::make_solution_feasible::simplex_table_modifier(int
     }//canny data crash point
     for(int b=0;b<st->slack_var[p_row_index].size();b++)
     {   buffer_obj.basic_plus_slack_plus_z_plus_rhs_temp.push_back(st->slack_var[p_row_index][b]);}// bug found long double to float conversion
-    buffer_obj.basic_plus_slack_plus_z_plus_rhs_temp.push_back(st->z_col[p_row_index]);
+    //buffer_obj.basic_plus_slack_plus_z_plus_rhs_temp.push_back(st->z_col[p_row_index]);
     buffer_obj.basic_plus_slack_plus_z_plus_rhs_temp.push_back(st->rhs[p_row_index]);
 
-    for(int b=0;b<st->z_row.size();b++)
+    /*for(int b=0;b<st->z_row.size();b++)
     {
         //cout<<"\nz_row= "<<st->z_row[b]<<" basic_s_z_r_t= "<<basic_plus_slack_plus_z_plus_rhs_temp[b];
         st->z_row[b]=(st->z_row[b]-multiplying_element*buffer_obj.basic_plus_slack_plus_z_plus_rhs_temp[b]);
-    }
-    //display_st(*st);
+    }*/
 }
 
 void modified_simplex_solver::make_solution_feasible::conflicting_data_finder(simplex_table* st)
@@ -518,15 +515,15 @@ void modified_simplex_solver::display_st(simplex_table st)
         {
             file1<<st.slack_var[a][c]<<",";
         }
-        file1<<st.z_col[a]<<","<<st.rhs[a]<<","<<st.theta[a]<<",";
+        file1/*<<st.z_col[a]<<","*/<<st.rhs[a]<<","<<st.theta[a]<<",";
 
         file1<<"\n";
     }
-    file1<<"z,";
+    /*file1<<"z,";
     for(int a=0;a<st.z_row.size();a++)
     {
         file1<<st.z_row[a]<<",";
-    }
+    }*/
 
     file1.close();
 }
@@ -652,7 +649,7 @@ bool modified_simplex_solver::start_solver(converted_data_pack* cdp)
             //temp.push_back(cdp->lower_firing_constrain_rhs);
             st->slack_var.push_back(temp);
 
-            st->z_col.push_back(0);
+            //st->z_col.push_back(0);
             st->rhs.push_back(lower_firing_constrain_rhs); //modification needs to be done here
         }
         for(int a=0;a<cdp->not_firing_data.size();a++)
@@ -677,10 +674,10 @@ bool modified_simplex_solver::start_solver(converted_data_pack* cdp)
             //temp.push_back(cdp->upper_not_firing_constrain_rhs);
             st->slack_var.push_back(temp);
 
-            st->z_col.push_back(0);
+            //st->z_col.push_back(0);
             st->rhs.push_back(upper_not_firing_constrain_rhs); //modification needs to be done here
         }
-
+        /*
         st->z_row.clear();
         //entering z row data
         for(int a=0;a<cdp->objective_function_coefficients.size();a++)
@@ -692,8 +689,7 @@ bool modified_simplex_solver::start_solver(converted_data_pack* cdp)
         {   st->z_row.push_back(0);}
         st->z_row.push_back(1);// co_orodianted (z,z)
         st->z_row.push_back(0);//(z,rhs)
-        //display_st();
-        //cout<<"data size1= "<<cdp->firing_data.size()<<endl;
+        /*/
         //needs modification
         feasible_solution_calculator.start(st);
         //cout<<"data size2= "<<cdp->firing_data.size()<<endl;
@@ -704,7 +700,7 @@ bool modified_simplex_solver::start_solver(converted_data_pack* cdp)
         {
             conflicting_data.firing_data.clear();
             conflicting_data.not_firing_data.clear();
-            conflicting_data.objective_function_coefficients.clear();
+            //conflicting_data.objective_function_coefficients.clear();
             conflicting_data.weight_matrix.clear();
             if(display_iterations==true)
             {
@@ -763,8 +759,8 @@ bool modified_simplex_solver::start_solver(converted_data_pack* cdp)
                 }
                 //ratio maintainer
                 int current_not_firing_data_size=cdp->not_firing_data.size();
-                int current_firing_data_size=cdp->firing_data.size();//                                   .get_ratio(cdp->firing_neuron_index)                        .get_ratio(cdp->firing_neuron_index) //get_ratio function is not required in this version.
-                float no_of_notfiring_data_to_be_removed_float=(current_not_firing_data_size*ratio_locker1.get_default_ratio()-current_firing_data_size)/ratio_locker1.get_default_ratio();
+                int current_firing_data_size=cdp->firing_data.size();
+                float no_of_notfiring_data_to_be_removed_float=(current_not_firing_data_size-current_firing_data_size);
                 int no_of_notfiring_data_to_be_removed=no_of_notfiring_data_to_be_removed_float;
                     //not firing data are veing removed from cdp and added to conflicting_data
                 if(display_iterations==true)//left_out
@@ -773,7 +769,6 @@ bool modified_simplex_solver::start_solver(converted_data_pack* cdp)
                     cout<<"current not_firing_data size= "<<cdp->not_firing_data.size()<<endl;
                     cout<<"firing_data_size= "<<cdp->firing_data.size()<<endl;
                     cout<<"no of firing data removed= "<<count1<<endl;
-                    cout<<"default_ratio= "<<ratio_locker1.get_default_ratio()<<endl;
                     cout<<"cdp->firing_neuron_index= "<<cdp->firing_neuron_index<<endl;
                 }
                 for(int a=current_not_firing_data_size-1;a>=(current_not_firing_data_size-no_of_notfiring_data_to_be_removed);a--)
@@ -800,7 +795,7 @@ bool modified_simplex_solver::start_solver(converted_data_pack* cdp)
             vector<double> weight_matrix_raw;
             weight_matrix_raw.clear();
             //push the raw solution in the converted data pack.
-            for(int a=0;a<cdp->objective_function_coefficients.size()*2;a++)
+            for(int a=0;a<cdp->firing_data[0].size()*2;a++)
             {
                 bool found=false;
                 for(int b=0;b<st->r_id.size();b++)
@@ -820,7 +815,7 @@ bool modified_simplex_solver::start_solver(converted_data_pack* cdp)
                 }
             }
             //pushing the calculated solution in the weight matrix
-            for(int a=0;a<cdp->objective_function_coefficients.size()*2;a+=2)
+            for(int a=0;a<cdp->firing_data[0].size()*2;a+=2)
             {
                 cdp->weight_matrix.push_back(weight_matrix_raw[a]-weight_matrix_raw[a+1]);
             }
@@ -848,8 +843,8 @@ void simplex_solver_data_preparation_class::cdp_viewer(converted_data_pack* cdp)
 {
     cout<<"firing neuron index= "<<cdp->firing_neuron_index<<"  label= "<<cdp->firing_label<<endl;
     cout<<"objective function coefficient= "<<endl;
-    for(int a=0;a<cdp->objective_function_coefficients.size();a++)
-    {   cout<<cdp->objective_function_coefficients[a]<<",";}
+    //for(int a=0;a<cdp->objective_function_coefficients.size();a++)
+    //{   cout<<cdp->objective_function_coefficients[a]<<",";}
     cout<<"\n\nfiring data:-"<<endl<<endl;
     for(int a=0;a<cdp->firing_data.size()-100;a++)
     {
@@ -871,11 +866,11 @@ void simplex_solver_data_preparation_class::cdp_saver_in_mathematical_format(con
 {
     fstream file1("question.txt",ios::out);
 
-    for(int a=0;a<cdp->objective_function_coefficients.size();a++)
+    /*for(int a=0;a<cdp->objective_function_coefficients.size();a++)
     {
         file1<<cdp->objective_function_coefficients[a]<<"c"<<a+1<<"+";
         cout<<cdp->objective_function_coefficients[a]<<",";
-    }
+    }*/
     file1<<"\n\n\n";
     for(int a=0;a<cdp->firing_data.size();a++)
     {
@@ -912,27 +907,6 @@ void simplex_solver_data_preparation_class::cdp_saver_in_mathematical_format(con
 
 bool simplex_solver_data_preparation_class::cyclic_bug_present()
 {   return lpp_solver1.cyclic_bug_present();}
-/*void simplex_solver_preparation_class::cdp_saver(converted_data_pack* cdp)
-{
-    ofstream file2("question2.txt",ios::out);
-    file2<<"\n\n";
-    cout<<" size= "<<cdp->not_firing_data.size();
-    for(int a=0;a<cdp->not_firing_data.size();a++)
-    {
-        file2<<"\n";
-        for(int b=0;b<cdp->not_firing_data[a].size();b++)
-        {
-            file2<<cdp->not_firing_data[a][b]<<"c"<<b+1;
-            //cout<<cdp->not_firing_data[a][b]<<"c"<<b+1<<endl;
-            if(b==cdp->not_firing_data[a].size()-1)
-            {   continue;}
-            file2<<"+";
-        }
-        //cout<<a<<" ";
-        file2<<"<10";
-    }
-    file2<<"testing hello";
-}*/
 
 void simplex_solver_data_preparation_class::cdp_spliter(vector<converted_data_pack> &cdps,int index)
 {
@@ -949,7 +923,7 @@ void simplex_solver_data_preparation_class::cdp_spliter(vector<converted_data_pa
     cdp_temp1.corupt_pack=cdps[index].corupt_pack;
     cdp_temp1.firing_label=cdps[index].firing_label;
     cdp_temp1.firing_neuron_index=cdps[index].firing_neuron_index;
-    cdp_temp1.objective_function_coefficients=cdps[index].objective_function_coefficients;
+    //cdp_temp1.objective_function_coefficients=cdps[index].objective_function_coefficients;
     cdp_temp1.weight_matrix=cdps[index].weight_matrix;
         //second half
     for(a=cdps[index].firing_data.size()/2;a<cdps[index].firing_data.size();a++)
@@ -959,28 +933,16 @@ void simplex_solver_data_preparation_class::cdp_spliter(vector<converted_data_pa
     cdp_temp2.corupt_pack=cdps[index].corupt_pack;
     cdp_temp2.firing_label=cdps[index].firing_label;
     cdp_temp2.firing_neuron_index=cdps[index].firing_neuron_index;
-    cdp_temp2.objective_function_coefficients=cdps[index].objective_function_coefficients;
+    //cdp_temp2.objective_function_coefficients=cdps[index].objective_function_coefficients;
     cdp_temp2.weight_matrix=cdps[index].weight_matrix;
-    //add data to cdp vec
-    //cout<<"\n\norig:";
-    //cout<<"\nfiring_data= "<<cdps[index].firing_data.size();
-    //cout<<"\nnot fiirng data= "<<cdps[index].not_firing_data.size();
     converted_data_pack temp;
     temp=cdps[index];
     cdps[index]=cdp_temp1;
     temp.firing_data.clear();
     temp.not_firing_data.clear();
-    temp.objective_function_coefficients.clear();
+    //temp.objective_function_coefficients.clear();
     temp.weight_matrix.clear();
-    //cout<<"\n\ncdp_temp1:";
-    //cout<<"\nfiring_data= "<<cdps[index].firing_data.size();
-    //cout<<"\nnot firing data= "<<cdps[index].not_firing_data.size();
     cdps.push_back(cdp_temp2);
-    //cout<<"\n\ncdp_temp2:";
-    //cout<<"\nfiring_data= "<<cdps[cdps.size()-1]->firing_data.size();
-    //cout<<"\nnot firing data= "<<cdps[cdps.size()-1]->not_firing_data.size();
-    //cout<<"\n\ncheck!!!";
-    //int fg;cin>>fg;
 }
 
 void simplex_solver_data_preparation_class::lp_solver()
@@ -991,7 +953,6 @@ void simplex_solver_data_preparation_class::lp_solver()
     int nf_size=cdp[0].not_firing_data.size();//memory_optimization7
     for(int a=0;a<cdp.size();a++)
     {
-        shared_block_data_obj.no_of_c_datapacks_completed++;
         point1:
         //cdp_spliter(cdp,a);
         if(cdp[a].firing_data.size()!=0 && cdp[a].not_firing_data.size()!=0)
@@ -1027,7 +988,7 @@ void simplex_solver_data_preparation_class::lp_solver()
         //erasing the conflicting data from the lpp_solver1
         lpp_solver1.conflicting_data.firing_data.clear();
         lpp_solver1.conflicting_data.not_firing_data.clear();
-        lpp_solver1.conflicting_data.objective_function_coefficients.clear();
+        //lpp_solver1.conflicting_data.objective_function_coefficients.clear();
         lpp_solver1.conflicting_data.weight_matrix.clear();
 
         //lp_optimizer may be added here.
@@ -1040,11 +1001,7 @@ void simplex_solver_data_preparation_class::lp_solver()
         {   
             pthread_mutex_lock(&lock);
             network->create_new_path(cdp[a].weight_matrix,cdp[a].firing_neuron_index);
-            //THE GREATE ELIMINATION ALGORITHM
-            //if(network->return_no_of_paths()>0)
-            //{   check_path_quality();}
             pthread_mutex_unlock(&lock);
-            //new paths getting created
         }
         //enter the label of the conflicting data //I think this process is already complete...... 
         
@@ -1054,7 +1011,7 @@ void simplex_solver_data_preparation_class::lp_solver()
         
         //cleanup
         conflicting_data_buffer.weight_matrix.clear();
-        conflicting_data_buffer.objective_function_coefficients.clear();
+        //conflicting_data_buffer.objective_function_coefficients.clear();
         conflicting_data_buffer.firing_data.clear();
         conflicting_data_buffer.not_firing_data.clear();
     }
@@ -1063,7 +1020,7 @@ void simplex_solver_data_preparation_class::lp_solver()
     if(conflicting_data_buffer_outer.conflicting_data_buffer_vector.size()>0)
     {
         //objective function coefficient calculation
-        int d=0;
+        /*int d=0;
         for(int a=0;a<conflicting_data_buffer_outer.conflicting_data_buffer_vector.size();a++)
         {
             conflicting_data_buffer_outer.conflicting_data_buffer_vector[a].objective_function_coefficients.resize(data_structure->no_of_elements_in_each_record);
@@ -1074,7 +1031,7 @@ void simplex_solver_data_preparation_class::lp_solver()
                 }
                 conflicting_data_buffer_outer.conflicting_data_buffer_vector[a].objective_function_coefficients[b]=conflicting_data_buffer_outer.conflicting_data_buffer_vector[a].objective_function_coefficients[b]/d;
             }
-        }
+        }*/
         for(int a=0;a<conflicting_data_buffer_outer.conflicting_data_buffer_vector.size();a++)
         {
             if(conflicting_data_buffer_outer.conflicting_data_buffer_vector[a].firing_data.size()==0)
@@ -1115,10 +1072,7 @@ simplex_solver_data_preparation_class::simplex_solver_data_preparation_class(vec
 {
     network=network1;
     data_structure=ds;
-    lpp_solver1.set_training_settings(ds->lower_firing_constrain_rhs,ds->upper_not_firing_constrain_rhs);
-    //for(int a=0;a<cdps.size();a++)//memory_optimization7
-    //{   cdp.push_back(&cdps[a]);}
-    
+    lpp_solver1.set_training_settings(ds->lower_firing_constrain_rhs,ds->upper_not_firing_constrain_rhs); 
     cdp=cdps;
 }
 
@@ -1330,7 +1284,7 @@ void core_class::big_c_datapack_handler(vector<converted_data_pack> &cdp)//passi
             {
                 cdp_temp2.firing_data.clear();
                 cdp_temp2.not_firing_data.clear();
-                cdp_temp2.objective_function_coefficients.clear();
+                //cdp_temp2.objective_function_coefficients.clear();
                 begin=end;
                 end=begin+limit;
                 if(end>=cdp_temp1.firing_data.size())
@@ -1348,12 +1302,12 @@ void core_class::big_c_datapack_handler(vector<converted_data_pack> &cdp)//passi
                 cdp_temp2.not_firing_data.insert(cdp_temp2.not_firing_data.end(),cdp_temp1.not_firing_data.begin()+begin,cdp_temp1.not_firing_data.begin()+end);
                 cdp_temp2.firing_label=cdp_temp1.firing_label;
                 cdp_temp2.firing_neuron_index=cdp_temp1.firing_neuron_index;
-                cdp_temp2.objective_function_coefficients=cdp_temp1.objective_function_coefficients;
+                //cdp_temp2.objective_function_coefficients=cdp_temp1.objective_function_coefficients;
                 cdp_vect_temp.push_back(cdp_temp2);
             }
             cdp_temp1.firing_data.clear();
             cdp_temp1.not_firing_data.clear();
-            cdp_temp1.objective_function_coefficients.clear();
+            //cdp_temp1.objective_function_coefficients.clear();
         }
     }
     cdp.insert(cdp.end(),cdp_vect_temp.begin(),cdp_vect_temp.end());
@@ -1372,10 +1326,10 @@ void core_class::big_c_datapack_handler(vector<converted_data_pack> &cdp)//passi
         {
             cdp_temp1.firing_data.clear();
             cdp_temp1.not_firing_data.clear();
-            cdp_temp1.objective_function_coefficients.clear();
+            //cdp_temp1.objective_function_coefficients.clear();
             cdp_temp2.firing_data.clear();
             cdp_temp2.not_firing_data.clear();
-            cdp_temp2.objective_function_coefficients.clear();
+            //cdp_temp2.objective_function_coefficients.clear();
             cdp_temp1=cdp[a];
             cdp.erase(cdp.begin()+a);
             while(abs(difference)>10)
@@ -1387,7 +1341,7 @@ void core_class::big_c_datapack_handler(vector<converted_data_pack> &cdp)//passi
                     cdp_temp2.not_firing_data.insert(cdp_temp2.not_firing_data.end(),cdp_temp1.not_firing_data.begin()+abs(difference),cdp_temp1.not_firing_data.end());
                     cdp_temp2.firing_label=cdp_temp1.firing_label;
                     cdp_temp2.firing_neuron_index=cdp_temp1.firing_neuron_index;
-                    cdp_temp2.objective_function_coefficients=cdp_temp1.objective_function_coefficients;
+                    //cdp_temp2.objective_function_coefficients=cdp_temp1.objective_function_coefficients;
                     cdp_temp1.not_firing_data.erase(cdp_temp1.not_firing_data.begin()+abs(difference),cdp_temp1.not_firing_data.end());
                     cdp_vect_temp.push_back(cdp_temp2);
                 }
@@ -1398,14 +1352,14 @@ void core_class::big_c_datapack_handler(vector<converted_data_pack> &cdp)//passi
                     cdp_temp2.firing_data.insert(cdp_temp2.firing_data.end(),cdp_temp1.firing_data.begin()+abs(difference),cdp_temp1.firing_data.end());
                     cdp_temp2.firing_label=cdp_temp1.firing_label;
                     cdp_temp2.firing_neuron_index=cdp_temp1.firing_neuron_index;
-                    cdp_temp2.objective_function_coefficients=cdp_temp1.objective_function_coefficients;
+                    //cdp_temp2.objective_function_coefficients=cdp_temp1.objective_function_coefficients;
                     cdp_temp1.firing_data.erase(cdp_temp1.firing_data.begin()+abs(difference),cdp_temp1.firing_data.end());
                     cdp_vect_temp.push_back(cdp_temp2);
                 }
                 difference=cdp_temp1.firing_data.size()-cdp_temp1.not_firing_data.size();
                 cdp_temp2.firing_data.clear();
                 cdp_temp2.not_firing_data.clear();
-                cdp_temp2.objective_function_coefficients.clear();
+                //cdp_temp2.objective_function_coefficients.clear();
             }
             cdp.push_back(cdp_temp1);
         }
@@ -1419,9 +1373,11 @@ void core_class::big_c_datapack_handler(vector<converted_data_pack> &cdp)//passi
     print_message();
 }
 
-void core_class::load_training_data_into_core(vector<nn_core_filtered_data>& f_data_pack1,int& no_of_threads1)
+void core_class::load_training_data_into_core(vector<nn_core_filtered_data>& f_data_pack1,int& no_of_threads1,int& split_start1,int& split_end1)
 {
     no_of_threads=no_of_threads1;
+    split_start=&split_start1;
+    split_end=&split_end1;
     f_data_pack=&f_data_pack1;
     ds.no_of_elements_in_each_record=f_data_pack->at(0).data[0].size();
     network_structure_modifier();
@@ -1496,7 +1452,7 @@ void core_class::train_core()
                 //clearing the buffers
                 c_datapack.firing_data.clear();
                 c_datapack.not_firing_data.clear();
-                c_datapack.objective_function_coefficients.clear();
+                //c_datapack.objective_function_coefficients.clear();
                 c_datapack.weight_matrix.clear();
                 //packing the firing data
                 for(int b=0;b<f_data_pack->at(a).data.size();b++)
@@ -1517,13 +1473,13 @@ void core_class::train_core()
                 c_datapack.firing_label=f_data_pack->at(a).label;
                 c_datapack.firing_neuron_index=a;
                 //setting up the objective function coefficient 
-                for(int b=0;b<c_datapack.firing_data[0].size();b++)
+                /*for(int b=0;b<c_datapack.firing_data[0].size();b++)
                 {
                     float summation=0;
                     for(int c=0;c<c_datapack.firing_data.size();c++)
                     {   summation=summation+c_datapack.firing_data[c][b];}
                     c_datapack.objective_function_coefficients.push_back(summation);
-                }
+                }*/
                 //pushing the c_datapack in c_datapacks vector
                 c_datapacks.push_back(c_datapack);
                 no_of_packages_created++;
@@ -1538,7 +1494,7 @@ void core_class::train_core()
                 //clearing the buffers
                 c_datapack.firing_data.clear();
                 c_datapack.not_firing_data.clear();
-                c_datapack.objective_function_coefficients.clear();
+                //c_datapack.objective_function_coefficients.clear();
                 c_datapack.weight_matrix.clear();
                 //packing the firing data
                 initial_value=final_value;
@@ -1562,13 +1518,13 @@ void core_class::train_core()
                 c_datapack.firing_label=f_data_pack->at(a).label;
                 c_datapack.firing_neuron_index=a;
                 //setting up the objective function coefficient
-                for(int b=0;b<c_datapack.firing_data[0].size();b++)
+                /*for(int b=0;b<c_datapack.firing_data[0].size();b++)
                 {
                     float summation=0;
                     for(int c=0;c<c_datapack.firing_data.size();c++)
                     {   summation=summation+c_datapack.firing_data[c][b];}
                     c_datapack.objective_function_coefficients.push_back(summation);
-                }
+                }*/
                 //pushing the c_datapack in c_datapacks vector
                 c_datapacks.push_back(c_datapack);
                 no_of_packages_created++;
@@ -1628,32 +1584,6 @@ void core_class::train_core()
     //{   progress_diaplay_thread->join();}
 }
 
-void core_class::display_training_progress()
-{
-    while(shared_block_data_obj.no_of_c_datapacks_completed<shared_block_data_obj.total_c_datapacks)
-    {
-        float x=shared_block_data_obj.no_of_c_datapacks_completed,y=shared_block_data_obj.total_c_datapacks;
-        struct winsize w;
-        ioctl(0,TIOCGWINSZ,&w);
-        float percentage=(x/y)*100;  
-        clrscr(); 
-        cout<<"\nprogress: ";
-        float hl=w.ws_col/2;
-        float ratio=100/hl;
-        float pl=percentage*hl/100;
-        for(int a=0;a<hl;a++)
-        {
-            if(a<pl)
-            {   cout<<"#";}
-            else
-            {   cout<<".";}
-        }
-        cout<<"  "<<percentage<<"%";
-        cout<<"  "<<shared_block_data_obj.no_of_c_datapacks_completed<<" out of "<<shared_block_data_obj.total_c_datapacks<<" c_datapacks complete"<<endl<<endl;
-        sleep(1);
-    }
-}
-
 int core_class::size_of_c_datapacks_vector(vector<converted_data_pack> &c_datapacks)
 {
     int sum=0;
@@ -1700,7 +1630,6 @@ void core_class::c_data_packs_division_for_multi_threading(vector<vector<convert
     message.clear();
     message="\nno of c_datapacks in c_datapacks_vector= "+to_string(sum);
     print_message();
-    shared_block_data_obj.total_c_datapacks=sum;
     message.clear();
     message="\nc_data_packs size= "+to_string(c_datapacks.size());
     print_message();

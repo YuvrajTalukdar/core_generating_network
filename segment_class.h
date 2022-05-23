@@ -56,7 +56,6 @@ class segment_class{
     vector<string> core_save_file_name_vector;
     
     //network information
-    float data_division=1.5;
     datapack_structure_defination ds;
     string network_save_file_name;
     bool id_lock=false;
@@ -71,6 +70,7 @@ class segment_class{
     string segment_save_file_name="NULL";//provided if core is loaded from a core/network savefile. Not set using constructor
 
     //progress bar data
+    bool pds=false;
     int predict_progress_bar_numerator=0;//for the predict progress bar
     int predict_progress_bar_denominator=0;//for the predict progress bar
 
@@ -84,9 +84,9 @@ class segment_class{
     void filter(nn_core_data_package_class* data_pack);
 
     vector<nn_core_filtered_data> f_data_vector;
-    vector<nn_core_filtered_data> f_test_data_vector;
     vector<vector<nn_core_filtered_data>> f_train_data_split;
 
+    vector<int> split_start,split_end;
     void split_attributes_for_each_core();
 
     void create_cores();
@@ -131,6 +131,7 @@ class segment_class{
     void save_data_pack(string name,nn_core_data_package_class data_pack);
 
     public:
+    float data_division=1.5;
     int no_of_threads;
     chromosome* critical_variable;
 

@@ -2,9 +2,9 @@
 
 void segment_class::predict_progress_bar()//need analyzing 
 {
-    while(shared_block_data_obj.predict_progress_bar_numerator<shared_block_data_obj.predict_progress_bar_denominator)
+    while(predict_progress_bar_numerator<predict_progress_bar_denominator)
     {
-        float x=shared_block_data_obj.predict_progress_bar_numerator,y=shared_block_data_obj.predict_progress_bar_denominator;
+        float x=predict_progress_bar_numerator,y=predict_progress_bar_denominator;
         if(y!=0)
         {
             struct winsize w;
@@ -23,7 +23,7 @@ void segment_class::predict_progress_bar()//need analyzing
                 {   cout<<".";}
             }
             cout<<"  "<<percentage<<"%";
-            cout<<"  "<<shared_block_data_obj.predict_progress_bar_numerator<<" out of "<<shared_block_data_obj.predict_progress_bar_denominator<<" predictions complete"<<endl<<endl;
+            cout<<"  "<<predict_progress_bar_numerator<<" out of "<<predict_progress_bar_denominator<<" predictions complete"<<endl<<endl;
             sleep(1);
         }
     }
@@ -34,7 +34,7 @@ bool segment_class::is_network_compatible_with_data()
     int total_input_neuron=0;
     for(int a=0;a<core_vector.size();a++)
     {   total_input_neuron+=core_vector[a]->return_no_of_input_neuron();}
-    if(f_test_data_vector[0].data[0].size()==total_input_neuron && f_test_data_vector.size()==core_vector[0]->return_no_of_output_neuron())
+    if(f_data_vector[0].data[0].size()==total_input_neuron && f_data_vector.size()==core_vector[0]->return_no_of_output_neuron())
     {   return true;}
     else
     {   return false;}
@@ -58,7 +58,6 @@ vector<string> segment_class::line_breaker(string line)
 }
 bool segment_class::load_segment(string segment_dir)//under construction
 {
-    f_test_data_vector=f_data_vector;//this line is needed
     critical_variables_set=true;
     string segment_file_name;
     for (const auto & entry : fs::directory_iterator(segment_dir))
@@ -380,25 +379,33 @@ int segment_class::index_of_neuron_to_be_fired(int label,vector<float> elements)
 
 float segment_class::testing_for_each_label()//finds the accuracy of each label
 {   
-    int correct_each_label[f_test_data_vector.size()],total_each_label[f_test_data_vector.size()];
+    int correct_each_label[f_data_vector.size()],total_each_label[f_data_vector.size()];
     int correct=0,total=0;
     int fired_neuron_index;
-    int df[f_test_data_vector.size()]={0},nf[f_test_data_vector.size()]={0};
+    int df[f_data_vector.size()]={0},nf[f_data_vector.size()]={0};
     bool print_correct_incorrect_data=false;
     nn_core_data_package_class correct_data,incorrect_data;
-    for(int a=0;a<f_test_data_vector.size();a++)
+    int b_start;
+    bool test_mode=false;
+    if(data_division==0)
+    {   test_mode=true;}
+    for(int a=0;a<f_data_vector.size();a++)
     {
         correct_each_label[a]=0;
         total_each_label[a]=0;
-        for(int b=0;b<f_test_data_vector[a].data.size();b++)
+        if(test_mode)
+        {   b_start=0;}
+        else
+        {   b_start=f_data_vector[a].data.size()/data_division;}
+        for(int b=b_start;b<f_data_vector[a].data.size();b++)
         {
-            fired_neuron_index=propagate(f_test_data_vector[a].data[b]);
-            if(fired_neuron_index==index_of_neuron_to_be_fired(f_test_data_vector[a].label,ds.elements))
+            fired_neuron_index=propagate(f_data_vector[a].data[b]);
+            if(fired_neuron_index==index_of_neuron_to_be_fired(f_data_vector[a].label,ds.elements))
             {   
                 correct_each_label[a]++;
                 if(print_correct_incorrect_data)
                 {
-                    correct_data.data.push_back(f_test_data_vector[a].data[b]);
+                    correct_data.data.push_back(f_data_vector[a].data[b]);
                     correct_data.labels.push_back(f_data_vector[a].label);
                 }
             }
@@ -410,14 +417,14 @@ float segment_class::testing_for_each_label()//finds the accuracy of each label
             {
                 if(print_correct_incorrect_data)
                 {
-                    incorrect_data.data.push_back(f_test_data_vector[a].data[b]);
+                    incorrect_data.data.push_back(f_data_vector[a].data[b]);
                     incorrect_data.labels.push_back(f_data_vector[a].label);
                 }
             }
             total_each_label[a]++;
         }
+        total+=total_each_label[a];
         correct+=correct_each_label[a];
-        total+=f_test_data_vector[a].data.size();
     }
     if(print_correct_incorrect_data)
     {
@@ -425,17 +432,17 @@ float segment_class::testing_for_each_label()//finds the accuracy of each label
         save_data_pack("correct_data.csv",correct_data);
     }
     float avg_accuracy=0,accuracy;
-    for(int a=0;a<f_test_data_vector.size();a++)
+    for(int a=0;a<f_data_vector.size();a++)
     {
         accuracy=(((float)correct_each_label[a])/((float)total_each_label[a]))*100;
         if(critical_variables_set)
         {
-            message="\nAccuracy for label "+to_string(f_test_data_vector[a].label)+" = "+to_string(accuracy)+"%"+" correct="+to_string(correct_each_label[a])+" total="+to_string(total_each_label[a])+" df="+to_string(df[a])+" nf="+to_string(nf[a]);
+            message="\nAccuracy for label "+to_string(f_data_vector[a].label)+" = "+to_string(accuracy)+"%"+" correct="+to_string(correct_each_label[a])+" total="+to_string(total_each_label[a])+" df="+to_string(df[a])+" nf="+to_string(nf[a]);
             print_message();
         }
         avg_accuracy+=accuracy;
     }
-    avg_accuracy=avg_accuracy/f_test_data_vector.size();
+    avg_accuracy=avg_accuracy/f_data_vector.size();
     if(critical_variables_set)
     {
         message="\n\nAvg Accuracy= "+to_string(avg_accuracy)+"%"+" correct= "+to_string(correct)+" total= "+to_string(total);
@@ -452,7 +459,7 @@ void segment_class::print_prediction(nn_core_data_package_class& data_pack,int t
 
     file1<<"data,label,\n";
     float label;
-    shared_block_data_obj.predict_progress_bar_denominator=data_pack.data.size();
+    predict_progress_bar_denominator=data_pack.data.size();
         
     thread* predict_progress_bar_thread;
     if(pds==true)
@@ -464,7 +471,7 @@ void segment_class::print_prediction(nn_core_data_package_class& data_pack,int t
         {   file1<<data_pack.data[a][b]<<",";}
         label=ds.elements[propagate(data_pack.data[a])];
         file1<<":"<<label<<",\n";
-        shared_block_data_obj.predict_progress_bar_numerator++;
+        predict_progress_bar_numerator++;
     }
     if(pds==true)
     {   predict_progress_bar_thread->join();}
@@ -477,6 +484,8 @@ void segment_class::print_prediction(nn_core_data_package_class& data_pack,int t
 void segment_class::split_attributes_for_each_core()//ok tested
 {
     //split train data
+    split_start.clear();
+    split_end.clear();
     int start=0,end;
     vector<float> data;
     for(int a=0;a<f_train_data_split.size();a++)//for each core
@@ -489,26 +498,15 @@ void segment_class::split_attributes_for_each_core()//ok tested
             for(int c=0;c<count;c++)//for each data
             {
                 data.clear();
-                for(int d=start;(d<start+no_of_attributes_per_core_balanced && d<f_data_vector[b].data[c].size());d++)//for each attribute
-                {   data.push_back(f_data_vector[b].data[c][d]);}
+                if(start+no_of_attributes_per_core_balanced<f_data_vector[b].data[c].size())
+                {   data.insert(data.end(),f_data_vector[b].data[c].begin()+start,f_data_vector[b].data[c].begin()+(start+no_of_attributes_per_core_balanced));}
+                else
+                {   data.insert(data.end(),f_data_vector[b].data[c].begin()+start,f_data_vector[b].data[c].end());}
                 if(a==f_train_data_split.size()-1 && extra_attributes_in_last_core>0)
-                {
-                    for(int d=start+no_of_attributes_per_core_balanced;d<f_data_vector[b].data[c].size();d++)
-                    {   data.push_back(f_data_vector[b].data[c][d]);}
-                }
+                {   data.insert(data.end(),f_data_vector[b].data[c].begin()+(start+no_of_attributes_per_core_balanced),f_data_vector[b].data[c].end());}
                 f_data.data.push_back(data);
             }
             f_train_data_split[a].push_back(f_data);
-            if(a==0)
-            {
-                nn_core_filtered_data f_test_data;
-                for(int c=count;c<f_data_vector[b].data.size();c++)
-                {
-                    f_test_data.data.push_back(f_data_vector[b].data[c]);
-                    f_test_data.label=f_data_vector[b].label;
-                }
-                f_test_data_vector.push_back(f_test_data);
-            }
         }
         start+=no_of_attributes_per_core_balanced;
     }
@@ -603,7 +601,6 @@ void segment_class::train()
         set_critical_variable(critical_variable);
         critical_variables_set=false;
         f_train_data_split.clear();
-        f_test_data_vector.clear();
         create_cores();
         split_attributes_for_each_core();
     }
@@ -617,7 +614,7 @@ void segment_class::train()
                 message="\nTraining Core "+to_string(core_vector[a]->return_core_no());
                 print_message();
             }
-            core_vector[a]->load_training_data_into_core(f_train_data_split[a],no_of_threads);
+            core_vector[a]->load_training_data_into_core(f_train_data_split[a],no_of_threads,split_start[a],split_end[a]);
             core_vector[a]->train_core();
             if(critical_variables_set)
             {
@@ -638,7 +635,7 @@ void segment_class::train()
                 message="\nTraining Core "+to_string(core_vector[a]->return_core_no());
                 print_message();
             }
-            core_vector[a]->load_training_data_into_core(f_train_data_split[a],no_of_threads);
+            core_vector[a]->load_training_data_into_core(f_train_data_split[a],no_of_threads,split_start[a],split_end[a]);
             thread_vec[a]=thread(&core_class::train_core,core_vector[a]);
         }
         for(int a=0;a<thread_vec.size();a++)
@@ -661,7 +658,6 @@ void segment_class::train()
 void segment_class::start_trainer()
 {
     f_train_data_split.clear();
-    f_test_data_vector.clear();
     create_cores();
     split_attributes_for_each_core();
     train();

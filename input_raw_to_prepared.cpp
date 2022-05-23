@@ -43,7 +43,7 @@ void breaker(raw_data* rw_data,string line)
         {
             if(line.at(a)==',')
             {
-                float val = atof(num_char);//*100  
+                float val = atof(num_char)*100;//*100  
                 //cout<<val<<endl;
                 one_row_of_data.push_back(val);
                 for(int b=0;b<20;b++){
@@ -55,7 +55,7 @@ void breaker(raw_data* rw_data,string line)
             ch[1]='\0';
             strcat(num_char,ch);
         }
-        one_row_of_data.push_back(atof(num_char));//*100
+        one_row_of_data.push_back(atof(num_char)*100);//*100
         rw_data->rawData.push_back(one_row_of_data);
     }
 }
@@ -380,7 +380,7 @@ void start_segment(
             if(network_load_status)
             {   
                 if(segment1.is_network_compatible_with_data())
-                {   segment1.testing_for_each_label();}
+                {   segment1.data_division=0;segment1.testing_for_each_label();}
                 else
                 {   cout<<"\nERROR!! loaded network is not compatible with loaded dataset.";}
             }
