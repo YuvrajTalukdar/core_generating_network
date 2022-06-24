@@ -43,7 +43,7 @@ void breaker(raw_data* rw_data,string line)
         {
             if(line.at(a)==',')
             {
-                float val = atof(num_char)*100;//*100  
+                float val = atof(num_char);//*100  
                 //cout<<val<<endl;
                 one_row_of_data.push_back(val);
                 for(int b=0;b<20;b++){
@@ -203,7 +203,7 @@ chromosome get_critical_variables_from_user(unsigned int &iterations,unsigned in
     {   cout<<"\nWrong Option!!";goto point1;}
     if(critical_variables.id==-1)
     {
-        cout<<"\nNo of iteratiosn: ";
+        cout<<"\nNo of iterations: ";
         cin>>iterations;
         cout<<"\nInitial population size: ";
         cin>>population_size;

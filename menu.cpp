@@ -102,7 +102,7 @@ bool menu(string &file_name,int &test_train_predict,string &network_save_file_na
     //.csv file finder
     struct dirent *de;  // Pointer for directory entry
     // opendir() returns a pointer of DIR type. 
-    DIR *dr = opendir(".");
+    DIR *dr = opendir("./data/");
     if (dr == NULL)  // opendir returns NULL if couldn't open directory
     {
         cout<<"Could not open current directory";
@@ -150,6 +150,7 @@ bool menu(string &file_name,int &test_train_predict,string &network_save_file_na
             clrscr();
             goto point0;
         }
+        file_name="./data/"+file_name;
         clrscr();
         heading="CORE GENERATING NETWOR TEST INTERFACE\n";
         cout<<setw(w.ws_col/2+heading.length()/2)<<heading;
@@ -174,6 +175,7 @@ bool menu(string &file_name,int &test_train_predict,string &network_save_file_na
         file_name=select_data_file(csv_save_file);
         if(file_name.length()==0)
         {   goto point4;}
+        file_name="./data/"+file_name;
 
         test_train_predict=2;
     }
@@ -209,6 +211,7 @@ bool menu(string &file_name,int &test_train_predict,string &network_save_file_na
         file_name=select_data_file(csv_save_file);
         if(file_name.length()==0)
         {   goto point2;}
+        file_name="./data/"+file_name;
 
         test_train_predict=4;
     }
