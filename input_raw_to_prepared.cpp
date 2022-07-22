@@ -43,7 +43,7 @@ void breaker(raw_data* rw_data,string line)
         {
             if(line.at(a)==',')
             {
-                float val = atof(num_char);//*100  
+                float val = atof(num_char);//*100
                 //cout<<val<<endl;
                 one_row_of_data.push_back(val);
                 for(int b=0;b<20;b++){
@@ -55,7 +55,7 @@ void breaker(raw_data* rw_data,string line)
             ch[1]='\0';
             strcat(num_char,ch);
         }
-        one_row_of_data.push_back(atof(num_char)*100);//*100
+        one_row_of_data.push_back(atof(num_char));//*100
         rw_data->rawData.push_back(one_row_of_data);
     }
 }
@@ -106,7 +106,7 @@ void data_filter(raw_data* filtered_data,string file_name)
     }
 }
 
-void prepare_data(nn_core_data_package_class* data_pack,string file_name)
+void prepare_data(nn_core_data_package_class* data_pack,string file_name,int test_train_predict)
 {
     raw_data filtered_data;
     data_filter(&filtered_data,file_name);
@@ -119,14 +119,16 @@ void prepare_data(nn_core_data_package_class* data_pack,string file_name)
         row.clear();
         for(int b=0;b<filtered_data.rawData[a].size();b++)
         {
-            if(b==filtered_data.rawData[a].size()-1)
-            {
-                data_pack->labels.push_back(filtered_data.rawData[a][b]);
-            }
+            if(test_train_predict==2)
+            {   row.push_back(filtered_data.rawData[a][b]);}
             else
             {
-                row.push_back(filtered_data.rawData[a][b]);
+                if(b==filtered_data.rawData[a].size()-1)
+                {   data_pack->labels.push_back(filtered_data.rawData[a][b]);}
+                else
+                {   row.push_back(filtered_data.rawData[a][b]);}
             }
+            
         }
         data_pack->data.push_back(row);
     }
@@ -395,14 +397,8 @@ void segment_starter(string &file_name_local,int &test_train_predict,string &seg
     nn_core_data_package_class data_pack;
     if(test_train_predict==1 || test_train_predict==2 || test_train_predict==4)
     {   
-        prepare_data(&data_pack,file_name_local);
+        prepare_data(&data_pack,file_name_local,test_train_predict);
         cout<<"\ndata file reading success!!!\n";
-    }
-    if(test_train_predict==2)//preprocess the data_pack to move the labels to dataset
-    {
-        for(int a=0;a<data_pack.data.size();a++)
-        {   data_pack.data[a].push_back(data_pack.labels[a]);}
-        data_pack.labels.clear();
     }
     chromosome critical_variables;
     if(test_train_predict==1)
