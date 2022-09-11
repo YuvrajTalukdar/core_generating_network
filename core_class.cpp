@@ -533,8 +533,8 @@ bool modified_simplex_solver::check_for_corrupt_cdp(converted_data_pack* cdp)
     try{
         int firing_crash_size=cdp->firing_data.size();
         int not_firing_data=cdp->not_firing_data.size();
-        int firing_crash=cdp->firing_data.at(0).size();
-        int not_firing_crash=cdp->not_firing_data.at(0).size();
+        int firing_crash=cdp->firing_data.at(0)->size();
+        int not_firing_crash=cdp->not_firing_data.at(0)->size();
         return false;
     }
     catch(exception &e)
@@ -566,7 +566,7 @@ bool modified_simplex_solver::start_solver(converted_data_pack* cdp)
     }
     else if(corrupt_cdp==false)
     {   
-        for(int a=0;a<cdp->firing_data[0].size()*2;a++)
+        for(int a=0;a<cdp->firing_data[0]->size()*2;a++)
         {
             temp_id.basic=true;
             temp_id.slack=false;
@@ -576,8 +576,8 @@ bool modified_simplex_solver::start_solver(converted_data_pack* cdp)
             temp_id.id=a;
             st->c_id.push_back(temp_id);
         }
-        int slack_id=cdp->firing_data[0].size()*2;
-        for(int a=cdp->firing_data[0].size();a<(cdp->firing_data[0].size()+cdp->firing_data.size()+cdp->not_firing_data.size());a++)
+        int slack_id=cdp->firing_data[0]->size()*2;
+        for(int a=cdp->firing_data[0]->size();a<(cdp->firing_data[0]->size()+cdp->firing_data.size()+cdp->not_firing_data.size());a++)
         {
             temp_id.slack=true;
             temp_id.basic=false;
@@ -631,9 +631,9 @@ bool modified_simplex_solver::start_solver(converted_data_pack* cdp)
         {
             temp.clear();
             //entering basic variable data
-            for(int b=0;b<cdp->firing_data[a].size();b++)
-            {   temp.push_back(cdp->firing_data[a][b]);
-                temp.push_back(cdp->firing_data[a][b]-2*cdp->firing_data[a][b]);
+            for(int b=0;b<cdp->firing_data[a]->size();b++)
+            {   temp.push_back(cdp->firing_data[a]->at(b));
+                temp.push_back(cdp->firing_data[a]->at(b)-2*cdp->firing_data[a]->at(b));
             }
             st->basic_var.push_back(temp);
             temp.clear();
@@ -656,9 +656,9 @@ bool modified_simplex_solver::start_solver(converted_data_pack* cdp)
         {
             temp.clear();
             //entering basic variable data
-            for(int b=0;b<cdp->not_firing_data[a].size();b++)
-            {   temp.push_back(cdp->not_firing_data[a][b]);
-                temp.push_back(cdp->not_firing_data[a][b]-2*cdp->not_firing_data[a][b]);
+            for(int b=0;b<cdp->not_firing_data[a]->size();b++)
+            {   temp.push_back(cdp->not_firing_data[a]->at(b));
+                temp.push_back(cdp->not_firing_data[a]->at(b)-2*cdp->not_firing_data[a]->at(b));
             }
             st->basic_var.push_back(temp);
             temp.clear();
@@ -795,7 +795,7 @@ bool modified_simplex_solver::start_solver(converted_data_pack* cdp)
             vector<double> weight_matrix_raw;
             weight_matrix_raw.clear();
             //push the raw solution in the converted data pack.
-            for(int a=0;a<cdp->firing_data[0].size()*2;a++)
+            for(int a=0;a<cdp->firing_data[0]->size()*2;a++)
             {
                 bool found=false;
                 for(int b=0;b<st->r_id.size();b++)
@@ -815,7 +815,7 @@ bool modified_simplex_solver::start_solver(converted_data_pack* cdp)
                 }
             }
             //pushing the calculated solution in the weight matrix
-            for(int a=0;a<cdp->firing_data[0].size()*2;a+=2)
+            for(int a=0;a<cdp->firing_data[0]->size()*2;a+=2)
             {
                 cdp->weight_matrix.push_back(weight_matrix_raw[a]-weight_matrix_raw[a+1]);
             }
@@ -849,15 +849,15 @@ void simplex_solver_data_preparation_class::cdp_viewer(converted_data_pack* cdp)
     for(int a=0;a<cdp->firing_data.size()-100;a++)
     {
         //cout<<"a="<<a<<" size= "<<cdp->firing_data[a].size()<<endl;
-        for(int b=0;b<cdp->firing_data[a].size();b++)
-        {   cout<<cdp->firing_data[a][b]<<",";}
+        for(int b=0;b<cdp->firing_data[a]->size();b++)
+        {   cout<<cdp->firing_data[a]->at(b)<<",";}
         cout<<endl;
     }
     cout<<"\n\nnot_firing data:-\n\n";
     for(int a=0;a<cdp->not_firing_data.size()-100;a++)
     {
-        for(int b=0;b<cdp->not_firing_data[a].size();b++)
-        {   cout<<cdp->not_firing_data[a][b]<<",";}
+        for(int b=0;b<cdp->not_firing_data[a]->size();b++)
+        {   cout<<cdp->not_firing_data[a]->at(b)<<",";}
         cout<<endl;
     }
 }
@@ -875,10 +875,10 @@ void simplex_solver_data_preparation_class::cdp_saver_in_mathematical_format(con
     for(int a=0;a<cdp->firing_data.size();a++)
     {
         file1<<"\n";
-        for(int b=0;b<cdp->firing_data[a].size();b++)
+        for(int b=0;b<cdp->firing_data[a]->size();b++)
         {
-            file1<<cdp->firing_data[a][b]<<"c"<<b+1;
-            if(b==cdp->firing_data[a].size()-1)
+            file1<<cdp->firing_data[a]->at(b)<<"c"<<b+1;
+            if(b==cdp->firing_data[a]->size()-1)
             {   continue;}
             file1<<"+";
         }
@@ -892,11 +892,11 @@ void simplex_solver_data_preparation_class::cdp_saver_in_mathematical_format(con
     for(int a=0;a<cdp->not_firing_data.size();a++)
     {
         file2<<"\n";
-        for(int b=0;b<cdp->not_firing_data[a].size();b++)
+        for(int b=0;b<cdp->not_firing_data[a]->size();b++)
         {
-            file2<<cdp->not_firing_data[a][b]<<"c"<<b+1;
+            file2<<cdp->not_firing_data[a]->at(b)<<"c"<<b+1;
             //cout<<cdp->not_firing_data[a][b]<<"c"<<b+1<<endl;
-            if(b==cdp->not_firing_data[a].size()-1)
+            if(b==cdp->not_firing_data[a]->size()-1)
             {   continue;}
             file2<<"+";
         }
@@ -1016,22 +1016,8 @@ void simplex_solver_data_preparation_class::lp_solver()
         conflicting_data_buffer.not_firing_data.clear();
     }
     // 2. conflicting datas must be handled here.
-
     if(conflicting_data_buffer_outer.conflicting_data_buffer_vector.size()>0)
     {
-        //objective function coefficient calculation
-        /*int d=0;
-        for(int a=0;a<conflicting_data_buffer_outer.conflicting_data_buffer_vector.size();a++)
-        {
-            conflicting_data_buffer_outer.conflicting_data_buffer_vector[a].objective_function_coefficients.resize(data_structure->no_of_elements_in_each_record);
-            for(int b=0;b<data_structure->no_of_elements_in_each_record;b++)
-            {
-                for(d=0;d<conflicting_data_buffer_outer.conflicting_data_buffer_vector[a].firing_data.size();d++){
-                    conflicting_data_buffer_outer.conflicting_data_buffer_vector[a].objective_function_coefficients[b]+=conflicting_data_buffer_outer.conflicting_data_buffer_vector[a].firing_data[d][b];
-                }
-                conflicting_data_buffer_outer.conflicting_data_buffer_vector[a].objective_function_coefficients[b]=conflicting_data_buffer_outer.conflicting_data_buffer_vector[a].objective_function_coefficients[b]/d;
-            }
-        }*/
         for(int a=0;a<conflicting_data_buffer_outer.conflicting_data_buffer_vector.size();a++)
         {
             if(conflicting_data_buffer_outer.conflicting_data_buffer_vector[a].firing_data.size()==0)
@@ -1436,7 +1422,7 @@ void core_class::train_core()
         {
             int no_of_packages_created=0;
             int initial_value=0,final_value=0;
-            vector<vector<float>> not_firing_data_temp;
+            vector<vector<float>*> not_firing_data_temp;
             not_firing_data_temp.clear();
             //copying all the not firing data in not_firing_data_temp
             for(int b=0;b<f_data_pack->size();b++)
@@ -1444,7 +1430,7 @@ void core_class::train_core()
                 if(b!=a)
                 {
                     for(int c=0;c<f_data_pack->at(b).data.size();c++)
-                    {   not_firing_data_temp.push_back(f_data_pack->at(b).data[c]);}
+                    {   not_firing_data_temp.push_back(&f_data_pack->at(b).data[c]);}
                 }
             }
             while(no_of_packages_created!=no_of_c_data_packs_needed)
@@ -1456,7 +1442,7 @@ void core_class::train_core()
                 c_datapack.weight_matrix.clear();
                 //packing the firing data
                 for(int b=0;b<f_data_pack->at(a).data.size();b++)
-                {   c_datapack.firing_data.push_back(f_data_pack->at(a).data[b]);}
+                {   c_datapack.firing_data.push_back(&f_data_pack->at(a).data[b]);}
                 //packing not firing data
                 initial_value=final_value;
                 final_value=final_value+no_of_not_firing_data_in_each_pack;
@@ -1472,14 +1458,6 @@ void core_class::train_core()
                 //setting up the label and output neuron index
                 c_datapack.firing_label=f_data_pack->at(a).label;
                 c_datapack.firing_neuron_index=a;
-                //setting up the objective function coefficient 
-                /*for(int b=0;b<c_datapack.firing_data[0].size();b++)
-                {
-                    float summation=0;
-                    for(int c=0;c<c_datapack.firing_data.size();c++)
-                    {   summation=summation+c_datapack.firing_data[c][b];}
-                    c_datapack.objective_function_coefficients.push_back(summation);
-                }*/
                 //pushing the c_datapack in c_datapacks vector
                 c_datapacks.push_back(c_datapack);
                 no_of_packages_created++;
@@ -1503,7 +1481,7 @@ void core_class::train_core()
                 {   final_value=final_value+additional_firing_data_in_the_last_datapack;}
                 for(int b=initial_value;b<final_value;b++)
                 {
-                    c_datapack.firing_data.push_back(f_data_pack->at(a).data[b]);
+                    c_datapack.firing_data.push_back(&f_data_pack->at(a).data[b]);
                 }
                 //packing the not firing data
                 for(int b=0;b<f_data_pack->size();b++)
@@ -1511,37 +1489,19 @@ void core_class::train_core()
                     if(b!=a)
                     {
                         for(int c=0;c<f_data_pack->at(b).data.size();c++)
-                        {   c_datapack.not_firing_data.push_back(f_data_pack->at(b).data[c]);}
+                        {   c_datapack.not_firing_data.push_back(&f_data_pack->at(b).data[c]);}
                     }
                 }
                 //setting up the label and output neuron index
                 c_datapack.firing_label=f_data_pack->at(a).label;
                 c_datapack.firing_neuron_index=a;
-                //setting up the objective function coefficient
-                /*for(int b=0;b<c_datapack.firing_data[0].size();b++)
-                {
-                    float summation=0;
-                    for(int c=0;c<c_datapack.firing_data.size();c++)
-                    {   summation=summation+c_datapack.firing_data[c][b];}
-                    c_datapack.objective_function_coefficients.push_back(summation);
-                }*/
                 //pushing the c_datapack in c_datapacks vector
                 c_datapacks.push_back(c_datapack);
                 no_of_packages_created++;
             }
         }
     }
-    f_data_pack->clear();//memory_optimization3
-    message.clear();
-    message="finished packaging data in c_datapacks.";
-    print_message();
-    message.clear();
-    message="\ntotal no of c_data_packs= "+to_string(c_datapacks.size());
-    print_message();
     big_c_datapack_handler(c_datapacks);//for handling c_datapack with huge data which may create full conlflict senarios.
-    message.clear();
-    message="\ntotal no of c_data_packs after big c_datapacks handling= "+to_string(c_datapacks.size());
-    print_message();
     //this is the place for parallelization process.
     vector<vector<converted_data_pack>> c_datapacks_vector;
     message.clear();
@@ -1571,17 +1531,13 @@ void core_class::train_core()
     //lpp solvers will start now.........
     for(int a=0;a<no_of_threads;a++)
     {   thread_vec[a]=thread(&simplex_solver_data_preparation_class::lp_solver,lpp_solver_vec[a]);}
-    //int progress_bar_error;
-    //if(pds==true)
-    //{   progress_diaplay_thread=new thread(&core_class::display_training_progress,this);}
     for(int a=0;a<no_of_threads;a++)
     {   thread_vec[a].join();}
     lpp_solver_vec.clear();
     thread_vec.clear();
     c_datapacks.clear();
     c_datapacks_vector.clear();
-    //if(pds==true)
-    //{   progress_diaplay_thread->join();}
+    f_data_pack->clear();//memory_optimization3
 }
 
 int core_class::size_of_c_datapacks_vector(vector<converted_data_pack> &c_datapacks)

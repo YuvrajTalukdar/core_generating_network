@@ -32,8 +32,8 @@ struct datapack_structure_defination{
 
 struct converted_data_pack
 {
-    vector<vector<float>> firing_data;
-    vector<vector<float>> not_firing_data;
+    vector<vector<float>*> firing_data;
+    vector<vector<float>*> not_firing_data;
     //vector<float> objective_function_coefficients;
     vector<float> weight_matrix;//ans stored here.
     int firing_neuron_index;
