@@ -6,16 +6,9 @@ ANN class
 #define NEURON_AND_ANN_CLASS_H_
 
 #include<iostream>
-#include<vector>
-#include<string>
-#include<string.h>
 #include<math.h>
-#include<pthread.h>
+#include<thread>
 #include"neural_network_core_data_package_class.h"
-
-using namespace std;
-
-//static int firing_point; //30 40 90
 
 static pthread_mutex_t lock;
 
@@ -39,10 +32,8 @@ class neuron{
     void set_data(float d)
     {
         data=d;
-        //cout<<"\ndata="<<d<<endl;
-        if(d>firing_point){//i had to change it because of the private solver to -30
-            fire_status=true;
-        }
+        if(d>firing_point)
+        {   fire_status=true;}
     }
 
     void change_fire_status(bool s)
@@ -185,58 +176,71 @@ class ann{
         return output;
     }
 
-   vector<neuron> propagate(){
+    /*void mat_mul(int index,neuron *current_neuron)
+    {
         float summation=0;
-        vector<float> summation_vec;
-        vector<int> total_no_of_fires_of_paths;
-        total_no_of_fires_of_paths.clear();
-        bool sure_positive_found=false,second_neuron_fired_status=false;
-        int no_of_neurons_fired=0;
+        current_neuron->firing_point=0;
+        for(int a=0;a<path.size();a++)
+        {
+            float summation_temp=0;
+            if(path[a].output_neuron_id==index)
+            {
+                for(int b=0;b<path[a].weight_matrix.size();b++)
+                {
+                    summation_temp+=(input_neurons[b].return_data()*path[a].weight_matrix[b]);
+                }
+                if((summation_temp>summation_temp_thershold || summation_temp<summation_temp_thershold*-1) ||
+                (summation_temp>0 && summation_temp<40))
+                {   summation_temp=0;}
+                else
+                {   current_neuron->firing_point+=fp_change_value;}
+                if(flatening_fx_enabled)
+                {   summation_temp=((atan(summation_temp)*180/3.1415)/90)*100;}
+                summation+=summation_temp;
+            }
+        }
+        if((summation-current_neuron->firing_point>100000) || 
+        summation>=100000)
+        {   summation=0;}
+        current_neuron->set_data(summation);
+    }*/
+
+    vector<neuron> propagate()
+    {
+        float summation;
+        //vector<thread> thread_vec(output_neuron_size());
         for(int a=0;a<output_neuron_size();a++)
         {
             summation=0;
-            summation_vec.clear();
             output_neurons[a].firing_point=0;
             for(int c=0;c<path.size();c++)
             {
-                float summation_temp=0;
                 if(path[c].output_neuron_id==a)
                 {
-                    output_neurons[a].firing_point+=fp_change_value;//50,40
+                    float summation_temp=0;
                     for(int d=0;d<path[c].weight_matrix.size();d++)//weight matrix size = input neuron size
                     {
-                        summation_temp=summation_temp+input_neurons[d].return_data()*path[c].weight_matrix[d]; //need to be modified...................................
-                        //cout<<"i= "<<input_neurons[d].return_data()<<" w= "<<path[c].weight_matrix[d]<<endl;
+                        summation_temp+=(input_neurons[d].return_data()*path[c].weight_matrix[d]);
                     }
-                    if(summation_temp>summation_temp_thershold || summation_temp<summation_temp_thershold*-1)//500
-                    {
-                        summation_temp=0;
-                        output_neurons[a].firing_point-=fp_change_value;//50,40
-                    }
-                    else if(summation_temp>0&&summation_temp<40)
-                    {
-                        summation_temp=0;
-                        output_neurons[a].firing_point-=fp_change_value;//50,40
-                    }
-                    //cout<<"\nsummation_temp1= "<<summation_temp;
+                    if((summation_temp>summation_temp_thershold || summation_temp<summation_temp_thershold*-1) ||
+                    (summation_temp>0 && summation_temp<40))
+                    {   summation_temp=0;}
+                    else
+                    {   output_neurons[a].firing_point+=fp_change_value;}
                     if(flatening_fx_enabled)
                     {   summation_temp=((atan(summation_temp)*180/3.1415)/90)*100;}
-                    summation_vec.push_back(summation_temp);
-                    //cout<<"\nsummation_temp2= "<<summation_temp;
                     summation=summation+summation_temp;
                 }
             }
-            if(summation-output_neurons[a].firing_point>100000)//100000
+            if((summation-output_neurons[a].firing_point>100000) ||
+            summation>=100000)//100000
             {   summation=0;}
-            if(summation>=100000)//100000
-            {   summation=0;}
-            //cout<<"\nsummation= "<<summation<<" label_neuron_to_be_fired_id= "<<label_neuron_to_be_fired_id<<"a= "<<a;
-            //cout<<" firing_point= "<<firing_point;
             output_neurons[a].set_data(summation);
-            //counter for df and nf.
-            if(output_neurons[a].return_fire_status()==true)
-            {   no_of_neurons_fired++;}
+            //thread_vec[a]=thread(&ann::mat_mul,this,a,&output_neurons[a]);
         }
+        /*for(int a=0;a<output_neuron_size();a++)
+        {   thread_vec[a].join();}
+        thread_vec.clear();*/
         return output_neurons;
     }
 };

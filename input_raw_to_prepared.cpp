@@ -2,14 +2,6 @@
 file modified of compability with shuttle_converted.csv
 */
 
-#include<iostream>
-#include<fstream>
-#include<vector>
-#include<string>
-#include<string.h>
-#include<algorithm>
-
-//#include"core_class.h"
 #include"segment_class.h"
 
 using namespace std;

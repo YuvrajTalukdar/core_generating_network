@@ -2,23 +2,17 @@
 core class handles natural cores
 */
 
-#include<iostream>
-#include<vector>
 #include<fstream>
 #include<sys/stat.h>
-#include<string>
 #include<algorithm>
-#include<math.h>
 #include<stdlib.h>
 #include<time.h>
-#include<thread>
 #include<dirent.h>
 #include<unistd.h>
 #include<sys/ioctl.h>//for the terminal size
 
 #include"neuron_and_ann_class.h"
 
-using namespace std;
 static pthread_mutex_t lock_1;
 inline bool display_iterations=false;//iteration display switch for debugging the code
 

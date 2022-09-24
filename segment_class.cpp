@@ -421,8 +421,8 @@ float segment_class::testing_for_each_label()//finds the accuracy of each label
                     incorrect_data.labels.push_back(f_data_vector[a].label);
                 }
             }
-            total_each_label[a]++;
         }
+        total_each_label[a]+=(f_data_vector[a].data.size()-b_start);
         total+=total_each_label[a];
         correct+=correct_each_label[a];
     }

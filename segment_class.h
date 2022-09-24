@@ -7,7 +7,6 @@ core class handles natural cores
 #include"neuron_and_ann_class.h"
 #include"core_class.h"
 
-using namespace std;
 using namespace std::chrono;
 namespace fs = std::filesystem;
 

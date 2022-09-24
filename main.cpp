@@ -1,9 +1,4 @@
-#include<iostream>
-#include<string.h>
-
 #include"segment_start.h"
-
-using namespace std;
 
 int main()
 {
