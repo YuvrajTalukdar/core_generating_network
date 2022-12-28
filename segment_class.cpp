@@ -385,7 +385,7 @@ float segment_class::testing_for_each_label()//finds the accuracy of each label
     int df[f_data_vector.size()]={0},nf[f_data_vector.size()]={0};
     bool print_correct_incorrect_data=false;
     nn_core_data_package_class correct_data,incorrect_data;
-    int b_start;
+    int b_start,b_end;
     bool test_mode=false;
     if(data_division==0)
     {   test_mode=true;}
@@ -394,10 +394,25 @@ float segment_class::testing_for_each_label()//finds the accuracy of each label
         correct_each_label[a]=0;
         total_each_label[a]=0;
         if(test_mode)
-        {   b_start=0;}
+        {   b_start=0;b_end=f_data_vector[a].data.size();}
         else
-        {   b_start=f_data_vector[a].data.size()/data_division;}
-        for(int b=b_start;b<f_data_vector[a].data.size();b++)
+        {   
+            if(!critical_variables_set)
+            {
+                //b_start=0;
+                //b_end=f_data_vector[a].data.size()/data_division;
+                //b_start=f_data_vector[a].data.size()/data_division;
+                //b_end=f_data_vector[a].data.size();
+                b_start=f_data_vector[a].data.size()/data_division;
+                b_end=f_data_vector[a].data.size()/data_division+(f_data_vector[a].data.size()-f_data_vector[a].data.size()/data_division)/2;
+            }
+            else
+            {
+                b_start=f_data_vector[a].data.size()/data_division+(f_data_vector[a].data.size()-f_data_vector[a].data.size()/data_division)/2;
+                b_end=f_data_vector[a].data.size();
+            }
+        }
+        for(int b=b_start;b<b_end;b++)
         {
             fired_neuron_index=propagate(f_data_vector[a].data[b]);
             if(fired_neuron_index==index_of_neuron_to_be_fired(f_data_vector[a].label,ds.elements))
@@ -422,7 +437,7 @@ float segment_class::testing_for_each_label()//finds the accuracy of each label
                 }
             }
         }
-        total_each_label[a]+=(f_data_vector[a].data.size()-b_start);
+        total_each_label[a]+=(b_end-b_start);
         total+=total_each_label[a];
         correct+=correct_each_label[a];
     }
@@ -575,10 +590,10 @@ void segment_class::save_data_pack(string name,nn_core_data_package_class data_p
     {
         for(int b=0;b<data_pack.data[a].size();b++)
         {
-            line+=to_string(data_pack.data[a][b]/100);
+            line+=to_string(data_pack.data[a][b]);
             line+=",";
         }
-        line+=to_string(data_pack.labels[a]/100);
+        line+=to_string(data_pack.labels[a]);
         line+="\n";
         file1<<line;
         line="";
