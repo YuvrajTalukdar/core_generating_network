@@ -290,7 +290,7 @@ void segment_class::make_prediction_on_user_entered_data()
             float data;
             cout<<"a"<<a<<"= ";
             cin>>data;
-            data_vector.push_back(data);
+            data_vector.push_back(data*100);
         }
         fired_neuron_index=propagate(data_vector);
         label=ds.elements[fired_neuron_index];
@@ -366,20 +366,12 @@ void segment_class::save_segment()//save all the cores and have a segment struct
     file1.close();
 }
 
-int segment_class::index_of_neuron_to_be_fired(int label,vector<float> elements)
-{
-    int index;
-    for(int a=0;a<elements.size();a++)
-    {
-        if(elements[a]==label)
-        {   index=a;break;}
-    }
-    return index;
-}
-
 float segment_class::testing_for_each_label()//finds the accuracy of each label
 {   
-    int correct_each_label[f_data_vector.size()],total_each_label[f_data_vector.size()];
+    int correct_each_label[f_data_vector.size()]={0},total_each_label[f_data_vector.size()]={0};
+    int false_positive_each_label[f_data_vector.size()]={0};//Predicted Positive but was Negative
+    int false_negative_each_label[f_data_vector.size()]={0};//Predicted Negative but was Positive
+
     int correct=0,total=0;
     int fired_neuron_index;
     int df[f_data_vector.size()]={0},nf[f_data_vector.size()]={0};
@@ -391,31 +383,33 @@ float segment_class::testing_for_each_label()//finds the accuracy of each label
     {   test_mode=true;}
     for(int a=0;a<f_data_vector.size();a++)
     {
-        correct_each_label[a]=0;
-        total_each_label[a]=0;
         if(test_mode)
         {   b_start=0;b_end=f_data_vector[a].data.size();}
         else
         {   
             if(!critical_variables_set)
             {
-                //b_start=0;
-                //b_end=f_data_vector[a].data.size()/data_division;
-                //b_start=f_data_vector[a].data.size()/data_division;
-                //b_end=f_data_vector[a].data.size();
+                //original
                 b_start=f_data_vector[a].data.size()/data_division;
-                b_end=f_data_vector[a].data.size()/data_division+(f_data_vector[a].data.size()-f_data_vector[a].data.size()/data_division)/2;
+                b_end=f_data_vector[a].data.size();
+                //new
+                //b_start=f_data_vector[a].data.size()/data_division;
+                //b_end=f_data_vector[a].data.size()/data_division+(f_data_vector[a].data.size()-f_data_vector[a].data.size()/data_division)/2;
             }
             else
             {
-                b_start=f_data_vector[a].data.size()/data_division+(f_data_vector[a].data.size()-f_data_vector[a].data.size()/data_division)/2;
+                //new
+                //b_start=f_data_vector[a].data.size()/data_division+(f_data_vector[a].data.size()-f_data_vector[a].data.size()/data_division)/2;
+                //b_end=f_data_vector[a].data.size();
+                //original
+                b_start=f_data_vector[a].data.size()/data_division;
                 b_end=f_data_vector[a].data.size();
             }
         }
         for(int b=b_start;b<b_end;b++)
         {
             fired_neuron_index=propagate(f_data_vector[a].data[b]);
-            if(fired_neuron_index==index_of_neuron_to_be_fired(f_data_vector[a].label,ds.elements))
+            if(ds.elements[fired_neuron_index]==f_data_vector[a].label)
             {   
                 correct_each_label[a]++;
                 if(print_correct_incorrect_data)
@@ -430,6 +424,8 @@ float segment_class::testing_for_each_label()//finds the accuracy of each label
             {   df[a]++;}
             else
             {
+                false_positive_each_label[fired_neuron_index]++;
+                false_negative_each_label[a]++;
                 if(print_correct_incorrect_data)
                 {
                     incorrect_data.data.push_back(f_data_vector[a].data[b]);
@@ -446,25 +442,37 @@ float segment_class::testing_for_each_label()//finds the accuracy of each label
         save_data_pack("incorrect_data.csv",incorrect_data);
         save_data_pack("correct_data.csv",correct_data);
     }
-    float avg_accuracy=0,accuracy;
+    float avg_accuracy=0,accuracy,avg_precision=0,precision,avg_recall=0,recall,f1;
     for(int a=0;a<f_data_vector.size();a++)
     {
         accuracy=(((float)correct_each_label[a])/((float)total_each_label[a]))*100;
+        precision=(float)correct_each_label[a]/(float)(false_positive_each_label[a]+correct_each_label[a]);
+        recall=(float)correct_each_label[a]/(float)(correct_each_label[a]+false_negative_each_label[a]);//can also be considered as avg accuracy
+        avg_precision+=precision;
+        avg_recall+=recall;
+        //f1=2*precision*recall/(precision+recall);
         if(critical_variables_set)
         {
-            message="\nAccuracy for label "+to_string(f_data_vector[a].label)+" = "+to_string(accuracy)+"%"+" correct="+to_string(correct_each_label[a])+" total="+to_string(total_each_label[a])+" df="+to_string(df[a])+" nf="+to_string(nf[a]);
+            //message="\nAccuracy for label "+to_string(f_data_vector[a].label)+" = "+to_string(accuracy)+"%"+" correct="+to_string(correct_each_label[a])+" total="+to_string(total_each_label[a])+" df="+to_string(df[a])+" nf="+to_string(nf[a]);
+            message="\nAccuracy for label "+to_string(f_data_vector[a].label)+" = "+to_string(accuracy)+"%"+" correct="+to_string(correct_each_label[a])+" total="+to_string(total_each_label[a])+" precision: "+to_string(precision)+" recall: "+to_string(recall);
             print_message();
+            //message="\nPresision for label "+to_string(f_data_vector[a].label/100)+" = "+to_string();
         }
         avg_accuracy+=accuracy;
     }
     avg_accuracy=avg_accuracy/f_data_vector.size();
     if(critical_variables_set)
     {
-        message="\n\nAvg Accuracy= "+to_string(avg_accuracy)+"%"+" correct= "+to_string(correct)+" total= "+to_string(total);
+        avg_precision=avg_precision/(float)f_data_vector.size();
+        avg_recall=avg_recall/(float)f_data_vector.size();
+        f1=2*avg_precision*avg_recall/(avg_precision+avg_recall);
+        message="\n\nAvg Accuracy= "+to_string(avg_accuracy)+"%"+" correct= "+to_string(correct)+" total= "+to_string(total)+" avg_precision: "+to_string(avg_precision)+" avg_recall: "+to_string(avg_recall);
         print_message();
-        message="\n\nTotal Accuracy= "+to_string((((float)correct)/((float)total))*100)+"%"+" correct= "+to_string(correct)+" total= "+to_string(total);
+        message="\n\nTotal Accuracy= "+to_string((((float)correct)/((float)total))*100)+"%"+" correct= "+to_string(correct)+" total= "+to_string(total)+" f1: "+to_string(f1);
         print_message();
     }
+    //for(int a=0;a<ds.elements.size();a++)
+    //{   cout<<"\ne: "<<ds.elements[a];}
     return avg_accuracy;
 }
 
@@ -483,7 +491,7 @@ void segment_class::print_prediction(nn_core_data_package_class& data_pack,int t
     for(int a=0;a<data_pack.data.size();a++)
     {
         for(int b=0;b<data_pack.data[a].size();b++)
-        {   file1<<data_pack.data[a][b]<<",";}
+        {   file1<<data_pack.data[a][b]/100<<",";}
         label=ds.elements[propagate(data_pack.data[a])];
         file1<<":"<<label<<",\n";
         predict_progress_bar_numerator++;

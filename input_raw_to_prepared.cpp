@@ -7,6 +7,7 @@ file modified of compability with shuttle_converted.csv
 using namespace std;
 
 unsigned int iterations,population_size,mutation_percentage;
+int normalize_by=100;
 
 struct raw_data{
     vector<vector<float>> rawData;
@@ -35,7 +36,7 @@ void breaker(raw_data* rw_data,string line)
         {
             if(line.at(a)==',')
             {
-                float val = atof(num_char);//*100
+                float val = atof(num_char)*normalize_by;
                 //cout<<val<<endl;
                 one_row_of_data.push_back(val);
                 for(int b=0;b<20;b++){
@@ -312,7 +313,11 @@ void start_segment(
         if(segment1.load_segment(segment_dir)==true)
         {   
             if(data_pack.data[0].size()==segment1.return_ds().no_of_elements_in_each_record)
-            {   segment1.print_prediction(data_pack,train_test_predict);}
+            {
+                for(int a=0;a<data_pack.data.size();a++)
+                {   data_pack.data[a][data_pack.data[a].size()-1]=data_pack.data[a][data_pack.data[a].size()-1]*normalize_by;}
+                segment1.print_prediction(data_pack,train_test_predict);
+            }
             else
             {   cout<<"\nERROR!!! Data Pack do not belongs to the loaded network.";}
         }

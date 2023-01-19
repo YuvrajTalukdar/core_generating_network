@@ -94,8 +94,6 @@ class segment_class{
 
     void checker_nf(vector<neuron> &output_neurons);
 
-    int index_of_neuron_to_be_fired(int label,vector<float> elements);
-
     vector<neuron> combine_output_neurons(vector<vector<neuron>> output_neuron_matrix);
 
     int propagate(vector<float> input);
