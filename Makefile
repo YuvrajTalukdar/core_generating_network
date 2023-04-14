@@ -2,8 +2,8 @@
 CC=g++
 LIBS= -lpthread
 # use -Wall for displaying all warnings
-CXXFLAGS= -std=c++17 -march=native -mtune=native -O2
-CXXFLAGS2= -std=c++17 -march=native -mtune=native -g
+CXXFLAGS= -std=c++17 -O3 -march=native #-fopt-info
+CXXFLAGS2= -std=c++17 -march=native -g
 all: a.out
 
 a.out: main.o genetic_algorithm.o core_class.o menu.o input_raw_to_prepared.o segment_class.o
