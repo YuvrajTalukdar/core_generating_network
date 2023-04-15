@@ -8,6 +8,14 @@ int genetic_algorithm::get_random_number(int min,int max)
     return dist6(rng);
 }
 
+float genetic_algorithm::get_random_number_float(float min,float max)
+{
+    random_device dev;
+    mt19937 rng(dev());
+    uniform_real_distribution<> dist6(min,max);
+    return dist6(rng);
+}
+
 bool genetic_algorithm::get_random_bool()
 {
     int num=get_random_number(0,1);
@@ -285,7 +293,7 @@ void genetic_algorithm::generate_initial_population()
         c1.rhs_upper=get_random_number(rhs_upper_min,rhs_upper_max);
         c1.rhs_lower=get_random_number(rhs_lower_min,rhs_lower_max);
         c1.attributes_per_core=get_random_number(attributes_per_core_min,attributes_per_core_max);
-        c1.data_division=get_random_number(data_div_min,data_div_max);
+        c1.data_division=get_random_number_float(data_div_min,data_div_max);
         population.push_back(c1);
     }
     current_chromosome_id=population_size;
@@ -303,6 +311,7 @@ void genetic_algorithm::calc_fitness_threaded(int no_of_threads,vector<chromosom
                 segment1.add_f_data(*f_data_vector);
                 segment1.critical_variable=&population[a];
                 segment1.no_of_threads=no_of_threads;
+                segment1.ga_mode_enabled=true;
                 segment1.train();
                 segment1.clear();
             }
@@ -330,6 +339,7 @@ void genetic_algorithm::calc_fitness_threaded(int no_of_threads,vector<chromosom
                 segment1.add_f_data(*f_data_vector);
                 segment1.critical_variable=&population[a+b];
                 segment1.no_of_threads=no_of_threads;
+                segment1.ga_mode_enabled=true;
                 thread_vec[b]=thread(&segment_class::train,segment1);
                 segment_vec.push_back(segment1);
             }
@@ -349,6 +359,30 @@ void genetic_algorithm::calc_fitness_threaded(int no_of_threads,vector<chromosom
 
 chromosome genetic_algorithm::start_genetic_algorithm(int no_of_threads)
 {
+    float min_data_expected=1;
+    data_div_max=0.8;//0.8,0.6
+    data_div_min=0.2;//0.2
+    //need to check if the data_div_max and data_div_min is feasible or not
+    int least_data_size=f_data_vector->at(0).data.size();
+    for(int a=1;a<f_data_vector->size();a++)
+    {
+        if(least_data_size>f_data_vector->at(a).data.size())
+        {   least_data_size=f_data_vector->at(a).data.size();}
+    }
+    if(data_div_min*least_data_size<min_data_expected)
+    {
+        for(float a=0.3;a<0.8;a+=0.1)
+        {
+            if(least_data_size*a>=min_data_expected)
+            {   data_div_min=a;break;}
+        }
+        for(float a=0.7;a>=data_div_min;a-=0.1)
+        {
+            if(least_data_size-least_data_size*a>=min_data_expected)
+            {   data_div_max=a;break;}
+        }
+    }
+
     no_of_genes_to_mutate=8*mutation_percentage/100;
     if(no_of_genes_to_mutate==0)
     {   no_of_genes_to_mutate=3;}
@@ -414,10 +448,9 @@ void genetic_algorithm::save_chromosome(chromosome& chromosome)
     file1.close();
 }
 
-genetic_algorithm::genetic_algorithm(unsigned int &iterations,unsigned int &pop_size,unsigned int &mutation_percentage1,int &data_div_max1)
+genetic_algorithm::genetic_algorithm(unsigned int &iterations,unsigned int &pop_size,unsigned int &mutation_percentage1)
 {
     ga_iterations=iterations;
     population_size=pop_size;
     mutation_percentage=mutation_percentage1;
-    data_div_max=data_div_max1;
 }

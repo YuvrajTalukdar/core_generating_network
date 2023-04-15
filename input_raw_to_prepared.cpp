@@ -180,8 +180,11 @@ chromosome get_critical_variables_from_user(unsigned int &iterations,unsigned in
         cin>>critical_variables.rhs_lower;
         cout<<"attributes_per_core: ";
         cin>>critical_variables.attributes_per_core;
-        cout<<"data_division: ";
+        point4:
+        cout<<"data_division (0.2 to 0.8): ";
         cin>>critical_variables.data_division;
+        if(critical_variables.data_division>0.8 || critical_variables.data_division<0.2)
+        {   cout<<"Wrong Option!!\n";goto point4;}
         point3:
         cout<<"\nDo you confirm the critical variables?(y/n) ";
         cin>>option;
@@ -266,7 +269,7 @@ void shuffler(nn_core_filtered_data* f_data)
     }
 }
 
-int filter(nn_core_data_package_class& data_pack,datapack_structure_defination ds,vector<nn_core_filtered_data>& f_data_vector)
+void filter(nn_core_data_package_class& data_pack,datapack_structure_defination ds,vector<nn_core_filtered_data>& f_data_vector)
 {
     nn_core_filtered_data f_data;
     f_data_vector.clear();
@@ -288,16 +291,6 @@ int filter(nn_core_data_package_class& data_pack,datapack_structure_defination d
     {
         shuffler(&f_data_vector[a]);//has same size as that is of no of element
     }
-    int least_data=f_data_vector[0].data.size();
-    for(int a=1;a<f_data_vector.size();a++)
-    {
-        if(least_data>f_data_vector[a].data.size())
-        {   least_data=f_data_vector[a].data.size();}
-    }
-    if(least_data/6<6)
-    {   return 2;}
-    else
-    {   return 6;}
 }
 
 void start_segment(
@@ -341,7 +334,7 @@ void start_segment(
         segment_class segment1(0,0,"default_segment");
         vector<nn_core_filtered_data> f_data_vector;
         datapack_structure_defination ds=datapack_analyzer(&data_pack);
-        int data_div_max=filter(data_pack,ds,f_data_vector);
+        filter(data_pack,ds,f_data_vector);
         data_pack.data.clear();
         data_pack.labels.clear();
         segment1.set_ds(ds);
@@ -351,7 +344,7 @@ void start_segment(
             auto start = high_resolution_clock::now();
             if(critical_variables.id==-1)
             {
-                genetic_algorithm ga(iterations,population_size,mutation_percentage,data_div_max);
+                genetic_algorithm ga(iterations,population_size,mutation_percentage);
                 ga.ds=ds;
                 ga.f_data_vector=&f_data_vector;
                 critical_variables=ga.start_genetic_algorithm(no_of_threads);
@@ -379,7 +372,11 @@ void start_segment(
             if(network_load_status)
             {   
                 if(segment1.is_network_compatible_with_data())
-                {   segment1.data_division=0;segment1.testing_for_each_label();}
+                {   
+                    segment1.ga_mode_enabled=false;
+                    segment1.data_division=0;
+                    segment1.testing_for_each_label();
+                }
                 else
                 {   cout<<"\nERROR!! loaded network is not compatible with loaded dataset.";}
             }

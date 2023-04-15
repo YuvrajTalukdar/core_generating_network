@@ -378,33 +378,32 @@ float segment_class::testing_for_each_label()//finds the accuracy of each label
     bool print_correct_incorrect_data=false;
     nn_core_data_package_class correct_data,incorrect_data;
     int b_start,b_end;
-    bool test_mode=false;
-    if(data_division==0)
-    {   test_mode=true;}
     for(int a=0;a<f_data_vector.size();a++)
     {
-        if(test_mode)
-        {   b_start=0;b_end=f_data_vector[a].data.size();}
-        else
+        if(ga_mode_enabled)
         {   
             if(!critical_variables_set)
             {
-                //original
-                //b_start=f_data_vector[a].data.size()/data_division;
-                //b_end=f_data_vector[a].data.size();
                 //new
-                b_start=f_data_vector[a].data.size()/data_division;
-                b_end=f_data_vector[a].data.size()/data_division+(f_data_vector[a].data.size()-f_data_vector[a].data.size()/data_division)/2;
+                b_start=f_data_vector[a].data.size()*data_division;
+                b_end=f_data_vector[a].data.size()*data_division+(f_data_vector[a].data.size()-f_data_vector[a].data.size()*data_division)/2;
+                //original
+                //b_start=f_data_vector[a].data.size()*data_division;
+                //b_end=f_data_vector[a].data.size();
             }
             else
             {
                 //new
-                b_start=f_data_vector[a].data.size()/data_division+(f_data_vector[a].data.size()-f_data_vector[a].data.size()/data_division)/2;
+                b_start=f_data_vector[a].data.size()*data_division+(f_data_vector[a].data.size()-f_data_vector[a].data.size()*data_division)/2;
                 b_end=f_data_vector[a].data.size();
                 //original
-                //b_start=f_data_vector[a].data.size()/data_division;
+                //b_start=f_data_vector[a].data.size()*data_division;
                 //b_end=f_data_vector[a].data.size();
             }
+        }
+        else
+        {   
+            b_start=f_data_vector[a].data.size()*(data_division);b_end=f_data_vector[a].data.size();
         }
         for(int b=b_start;b<b_end;b++)
         {
@@ -473,9 +472,11 @@ float segment_class::testing_for_each_label()//finds the accuracy of each label
         avg_f1=avg_f1/(float)f_data_vector.size();
         message="\n\nTotal Accuracy: "+to_string((((float)correct)/((float)total))*100)+"%";
         print_message();
-        message="\nAvg Accuracy/Recall: "+to_string(avg_accuracy)+"%"+" correct= "+to_string(correct)+" total= "+to_string(total)+" avg_precision: "+to_string(avg_precision)+" avg_recall: "+to_string(avg_recall);
+        message="\nAvg Accuracy: "+to_string(avg_accuracy)+"%";
         print_message();
         message=+"\nAvg Precision: "+to_string(avg_precision);
+        print_message();
+        message=" avg_recall: "+to_string(avg_recall);
         print_message();
         message="\nAvg F1: "+to_string(avg_f1);
         print_message();
@@ -526,7 +527,7 @@ void segment_class::split_attributes_for_each_core()//ok tested
         {
             nn_core_filtered_data f_data;
             f_data.label=f_data_vector[b].label;
-            int count=f_data_vector[b].data.size()/data_division;
+            int count=f_data_vector[b].data.size()*data_division;
             for(int c=0;c<count;c++)//for each data
             {
                 data.clear();

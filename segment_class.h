@@ -19,7 +19,7 @@ class genetic_algorithm
     static const int rhs_upper_min=2,rhs_upper_max=20;
     static const int rhs_lower_min=40,rhs_lower_max=150;
     static const int attributes_per_core_min=8,attributes_per_core_max=30;
-    float data_div_min=2,data_div_max;
+    float data_div_min,data_div_max;
     //algorithm critical data
     unsigned int population_size,ga_iterations,mutation_percentage;
     int no_of_genes_to_mutate;
@@ -31,6 +31,7 @@ class genetic_algorithm
     void save_chromosome(chromosome& chromosome);
     void print_population(vector<chromosome>& population);
     int get_random_number(int min,int max);
+    float get_random_number_float(float min,float max);
     bool get_random_bool();
     static bool comparator(chromosome c1,chromosome c2);
     //genetic algorithm critical functions
@@ -45,7 +46,7 @@ class genetic_algorithm
     vector<nn_core_filtered_data>* f_data_vector;
 
     chromosome start_genetic_algorithm(int no_of_threads);
-    genetic_algorithm(unsigned int &iterations,unsigned int &population_size,unsigned int &mutation_percentage,int &data_div_max);
+    genetic_algorithm(unsigned int &iterations,unsigned int &population_size,unsigned int &mutation_percentage);
     /*GENETIC ALGORITHM COMPONENTS END*/
 };
 
@@ -128,7 +129,8 @@ class segment_class{
     void save_data_pack(string name,nn_core_data_package_class data_pack);
 
     public:
-    float data_division=1.5;
+    bool ga_mode_enabled=false;
+    float data_division=0.5;//train data ratio
     int no_of_threads;
     chromosome* critical_variable;
 
