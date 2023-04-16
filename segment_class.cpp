@@ -476,7 +476,7 @@ float segment_class::testing_for_each_label()//finds the accuracy of each label
         print_message();
         message=+"\nAvg Precision: "+to_string(avg_precision);
         print_message();
-        message=" avg_recall: "+to_string(avg_recall);
+        message="\navg_recall: "+to_string(avg_recall);
         print_message();
         message="\nAvg F1: "+to_string(avg_f1);
         print_message();
