@@ -19,3 +19,4 @@ For compilation-
 2. cd core_generating_network
 3. make all
 4. To run- ./a.out
+For Compilation from source for windows go to- https://github.com/YuvrajTalukdar/core_generating_network_windows
