@@ -14,3 +14,7 @@ Compilation from source (Linux)-
 Required Library
 1. G++ Compiler any version which supports c++ std 17.
 2. Make
+For compilation-
+1. Git clone https://github.com/YuvrajTalukdar/core_generating_network.git
+2. cd core_generating_network
+3. make all
