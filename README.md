@@ -18,3 +18,4 @@ For compilation-
 1. Git clone https://github.com/YuvrajTalukdar/core_generating_network.git
 2. cd core_generating_network
 3. make all
+4. To run- ./a.out
