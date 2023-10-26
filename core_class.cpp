@@ -916,9 +916,9 @@ void simplex_solver_data_preparation_class::cdp_spliter(vector<converted_data_pa
     //spliting process
     int a=0,b=0;
         //first half
-    for(a;a<cdps[index].firing_data.size()/2;a++)
+    for(;a<cdps[index].firing_data.size()/2;a++)
     {   cdp_temp1.firing_data.push_back(cdps[index].firing_data[a]);}
-    for(b;b<cdps[index].not_firing_data.size()/2;b++)
+    for(;b<cdps[index].not_firing_data.size()/2;b++)
     {   cdp_temp1.not_firing_data.push_back(cdps[index].not_firing_data[b]);}
     cdp_temp1.corupt_pack=cdps[index].corupt_pack;
     cdp_temp1.firing_label=cdps[index].firing_label;
@@ -1221,7 +1221,6 @@ bool core_class::load_core(string core_file_dir)
             {
                 elements=line_breaker(line);
                 path_struct path;
-                path.output_neuron_id;
                 for(int a=0;a<network1.input_neuron_size();a++)
                 {   
                     path.input_neuron_id.push_back(a);

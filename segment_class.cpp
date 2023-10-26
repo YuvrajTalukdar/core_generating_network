@@ -207,7 +207,7 @@ vector<neuron> segment_class::combine_output_neurons(vector<vector<neuron>> outp
 {
     vector<neuron> output_neuron;
     output_neuron.resize(output_neuron_matrix[0].size());
-    float value_vec[output_neuron.size()]={0};
+    vector<float> value_vec(output_neuron.size(),0.0);
     //float fp_vec[output_neuron.size()]={0};
     
     for(int a=0;a<output_neuron_matrix.size();a++)
@@ -368,13 +368,13 @@ void segment_class::save_segment()//save all the cores and have a segment struct
 
 float segment_class::testing_for_each_label()//finds the accuracy of each label
 {   
-    int correct_each_label[f_data_vector.size()]={0},total_each_label[f_data_vector.size()]={0};
-    int false_positive_each_label[f_data_vector.size()]={0};//Predicted Positive but was Negative
-    int false_negative_each_label[f_data_vector.size()]={0};//Predicted Negative but was Positive
+    vector<int> correct_each_label(f_data_vector.size(),0),total_each_label(f_data_vector.size(),0);
+    vector<int> false_positive_each_label(f_data_vector.size(),0);//Predicted Positive but was Negative
+    vector<int> false_negative_each_label(f_data_vector.size(),0);//Predicted Negative but was Positive
 
     int correct=0,total=0;
     int fired_neuron_index;
-    int df[f_data_vector.size()]={0},nf[f_data_vector.size()]={0};
+    vector<int> df(f_data_vector.size(),0),nf(f_data_vector.size(),0);
     bool print_correct_incorrect_data=false;
     nn_core_data_package_class correct_data,incorrect_data;
     int b_start,b_end;

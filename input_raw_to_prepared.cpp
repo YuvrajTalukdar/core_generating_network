@@ -259,7 +259,10 @@ void shuffler(nn_core_filtered_data* f_data)
         shuffling_data_temp_vector.push_back(shuffling_data_temp);
     }
     //shuffeling the data
-    random_shuffle(shuffling_data_temp_vector.begin(),shuffling_data_temp_vector.end());
+    random_device dev;
+    mt19937 rng(dev());
+    shuffle(shuffling_data_temp_vector.begin(),shuffling_data_temp_vector.end(),rng);
+    //random_shuffle(shuffling_data_temp_vector.begin(),shuffling_data_temp_vector.end());
     //pushing the data in the f_data
     f_data->data.clear();
     for(int a=0;a<shuffling_data_temp_vector.size();a++)

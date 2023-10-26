@@ -123,7 +123,7 @@ class ann{
         {
             if(weight_matrix[a]==0)
             {   zero_count++;}
-            if(abs(weight_matrix[a]>1000))
+            if(weight_matrix[a]>1000)
             {   extreame_value++;}
         }
         if(!extreame_weight_remover)
